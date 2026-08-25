@@ -100,6 +100,19 @@ a{color:var(--brandsoft)}
   box-shadow:0 20px 44px rgba(0,0,0,.38)}
 .slide.story{aspect-ratio:9/16;max-width:300px}
 .slide img{width:100%;height:100%;object-fit:cover}
+/* passar lâmina: uma seta de cada lado, por cima das bordas da arte */
+.palco{position:relative;width:100%;max-width:420px;display:flex;justify-content:center;
+  touch-action:pan-y}
+.palco.story{max-width:300px}
+.seta{position:absolute;top:50%;transform:translateY(-50%);width:44px;height:44px;
+  border-radius:999px;background:rgba(26,23,32,.72);border:1px solid rgba(246,241,232,.18);
+  color:var(--ink);display:flex;align-items:center;justify-content:center;z-index:3;
+  -webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);transition:background .15s}
+.seta:hover{background:rgba(26,23,32,.92)}
+.seta.esq{left:8px}
+.seta.dir{right:8px}
+.seta:disabled{opacity:.28;cursor:default}
+.conta-lam{font-size:11.5px;color:var(--mute);line-height:1.55;text-align:center}
 .tira{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
 .tira button{display:block;width:74px;flex:none;position:relative;line-height:0}
 .tira .t{display:block;position:relative;width:74px;height:93px;overflow:hidden;
@@ -633,6 +646,17 @@ function pecaHTML(p){
         (lam && lam.producao === "por_gravar" ? "vídeo por gravar" : "por desenhar") + '</span></div>') +
     '</div>';
 
+  // carrossel e stories passam-se com as setas (ou com ← → no computador)
+  if (p.laminas.length > 1){
+    var setas =
+      '<button class="seta esq naoimprime" data-passar="-1" aria-label="Lâmina anterior"' +
+        (idx <= 1 ? ' disabled' : '') + '>' + svg(I.volta,20,2) + '</button>' +
+      '<button class="seta dir naoimprime" data-passar="1" aria-label="Próxima lâmina"' +
+        (idx >= p.laminas.length ? ' disabled' : '') + '>' +
+        '<span style="display:flex;transform:rotate(180deg)">' + svg(I.volta,20,2) + '</span></button>';
+    slide = '<div class="palco' + (story ? " story" : "") + '">' + slide + setas + '</div>';
+  }
+
   var tira = p.laminas.length > 1 ? '<div class="tira">' + p.laminas.map(function(l){
     return '<button data-lamina="' + l.indice + '" class="' + (l.indice===idx?"on":"") + '">' +
       '<span class="t' + (story?" story":"") + '">' +
@@ -676,8 +700,8 @@ function pecaHTML(p){
 
   var centro = '<div class="centro">' + slide + tira +
     (p.laminas.length > 1
-      ? '<div class="nota">Lâmina ' + idx + ' de ' + p.laminas.length +
-        ' · toque numa lâmina para comentar só nela</div>' : "") +
+      ? '<div class="conta-lam naoimprime">' + (story ? "Placa " : "Lâmina ") + idx +
+        ' de ' + p.laminas.length + ' · passe com as setas · o comentário vai só para esta</div>' : "") +
     guiao + legenda + '</div>';
 
   var comentarios = p.comentarios.map(function(c){
@@ -961,10 +985,47 @@ function desenhar(){
 }
 
 // ------------------------------------------------------------------ eventos
+// passar de lâmina: setas, teclas ← →, ou deslizar o dedo sobre a arte
+function passar(passo){
+  if (!aberta) return;
+  var p = pecaPorChave(aberta);
+  if (!p || p.laminas.length < 2) return;
+  var novo = (laminaSel || 1) + passo;
+  if (novo < 1 || novo > p.laminas.length) return;
+  laminaSel = novo;
+  desenhar();
+}
+
+document.addEventListener("keydown", function(ev){
+  if (!aberta || editando) return;
+  var t = ev.target;
+  if (t && (t.tagName === "TEXTAREA" || t.tagName === "INPUT")) return;
+  if (ev.key === "ArrowLeft"){ passar(-1); }
+  else if (ev.key === "ArrowRight"){ passar(1); }
+});
+
+var toqueX = null, toqueY = null;
+document.addEventListener("touchstart", function(ev){
+  var alvo = ev.target.closest ? ev.target.closest(".palco") : null;
+  if (!alvo || ev.touches.length !== 1){ toqueX = null; return; }
+  toqueX = ev.touches[0].clientX;
+  toqueY = ev.touches[0].clientY;
+}, { passive: true });
+
+document.addEventListener("touchend", function(ev){
+  if (toqueX === null) return;
+  var t = ev.changedTouches[0];
+  var dx = t.clientX - toqueX, dy = t.clientY - toqueY;
+  toqueX = null;
+  // só conta como passar se for claramente horizontal (senão é rolar a página)
+  if (Math.abs(dx) > 45 && Math.abs(dx) > Math.abs(dy) * 1.6) passar(dx < 0 ? 1 : -1);
+}, { passive: true });
+
 document.addEventListener("click", function(ev){
   var alvo = ev.target.closest ? ev.target.closest("[data-aba],[data-abrir],[data-vista],[data-filtro]," +
     "[data-lamina],[data-voltar],[data-estado],[data-comentar],[data-editar],[data-cancelar]," +
-    "[data-guardar-legenda],[data-imprimir],[data-pdf],[data-semana],[data-semanas]") : null;
+    "[data-guardar-legenda],[data-imprimir],[data-pdf],[data-semana],[data-semanas]," +
+    "[data-passar]") : null;
   if (!alvo) return;
   var d = alvo.dataset;
 
@@ -982,6 +1043,7 @@ document.addEventListener("click", function(ev){
   else if (d.vista){ vista = d.vista; desenhar(); }
   else if (d.filtro){ filtro = d.filtro; desenhar(); }
   else if (d.lamina){ laminaSel = Number(d.lamina); desenhar(); }
+  else if (d.passar){ passar(Number(d.passar)); }
   else if (d.voltar){ aberta = null; diaAberto = null; laminaSel = null; editando = false; desenhar(); }
   else if (d.estado){ enviar(d.chave, "estado", { estado: d.estado }); }
   else if (d.comentar){
