@@ -685,7 +685,8 @@ function pecaHTML(p){
       (lam.producao === "por_desenhar" ? "A fotografia que entra aqui"
        : p.tipo === "reel" ? "O que você fala neste vídeo"
                            : Palavra + ' ' + lam.indice + ' · o que você fala') + '</div>' +
-      '<div class="serif" style="font-size:14px;line-height:1.75">' + esc(lam.guiao) + '</div></div>'
+      '<div class="serif" style="font-size:14px;line-height:1.75;white-space:pre-line">' +
+      esc(lam.guiao) + '</div></div>'
     : "";
 
   var legenda;
