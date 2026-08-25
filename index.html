@@ -292,6 +292,10 @@ body.so-imp .sala,body.so-imp .tabs{display:none!important}
 var SLUG = new URLSearchParams(location.search).get("c") || "teneci-set26-4b7c1e9a3f52";
 var API = "https://fpsqphfgxhrwsxtrbqnk.supabase.co/functions/v1/sala/api/" + encodeURIComponent(SLUG);
 var IMG = "https://fpsqphfgxhrwsxtrbqnk.supabase.co/functions/v1/sala/a/";
+// Baixar passa pela rota /d/ da funcao: entrega JPG (formato de rede social) e
+// poe o nome certo no Content-Disposition — o atributo download do <a> e
+// ignorado quando o ficheiro vem de outro dominio.
+var DL = "https://fpsqphfgxhrwsxtrbqnk.supabase.co/functions/v1/sala/d/";
 var ZIP = "https://fpsqphfgxhrwsxtrbqnk.supabase.co/functions/v1/sala/z/" + encodeURIComponent(SLUG) + "/";
 
 var D = null;
@@ -618,9 +622,9 @@ function baixarHTML(p, lam){
   if (!prontas.length && !temTxt) return "";
   var partes = [];
   if (lam && lam.asset){
-    var nomeDl = "IG_" + p.tipo + "_" + lam.indice + "_" + dia + ".webp";
-    partes.push('<a class="bt linha" href="' + IMG + encodeURI(lam.asset) +
-      '" download="' + esc(nomeDl) + '">' + svg(I.baixar,17) +
+    var nomeDl = "IG_" + p.tipo + "_" + lam.indice + "_" + dia;
+    partes.push('<a class="bt linha" href="' + DL + encodeURI(lam.asset) +
+      '?n=' + encodeURIComponent(nomeDl) + '">' + svg(I.baixar,17) +
       (p.laminas.length > 1
         ? (p.tipo === "stories" ? 'Baixar esta placa' : 'Baixar esta lâmina')
         : 'Baixar a arte') + '</a>');
