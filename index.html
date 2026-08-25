@@ -231,15 +231,36 @@ a.bt{text-decoration:none}
 }
 
 /* ---------------------------------------------------------------- impressao */
+.imp{display:none}
+body.so-imp .imp{display:block;background:#fff;color:#111;min-height:100vh;padding:28px}
+body.so-imp .sala,body.so-imp .tabs{display:none!important}
+.imp .pagina{page-break-after:always;break-after:page;padding-bottom:24px}
+.imp .pagina:last-child{page-break-after:auto}
+.imp .cab{border-bottom:2px solid #111;padding-bottom:10px;margin-bottom:6px}
+.imp .cab .linha1{font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:#666;margin-bottom:6px}
+.imp .cab h2{font-family:Georgia,serif;font-size:22px;font-weight:400;color:#111}
+.imp .fila{display:flex;gap:20px;align-items:flex-start;padding:14px 0;border-bottom:1px solid #ddd;
+  page-break-inside:avoid;break-inside:avoid}
+.imp .fila .col-arte{width:200px;flex:none}
+.imp .fila img{width:100%;border:1px solid #ccc;display:block}
+.imp .fila .semarte{width:100%;aspect-ratio:4/5;border:1px dashed #bbb;display:flex;
+  align-items:center;justify-content:center;font-size:10px;letter-spacing:.15em;
+  text-transform:uppercase;color:#999;text-align:center;padding:8px}
+.imp .fila .semarte.story{aspect-ratio:9/16}
+.imp .fila .col-copy{flex:1;min-width:0}
+.imp .fila .rot{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#888;margin:6px 0 0}
+.imp .fila .gravar{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#8a6d1a;margin-bottom:6px}
+.imp .fila .guiao-imp{font-family:Georgia,serif;font-size:13.5px;line-height:1.75;color:#222;white-space:pre-line}
+.imp .leg{padding:16px 0 0}
+.imp .leg .rot{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#888;margin-bottom:8px}
+.imp .leg .texto{font-size:12px;line-height:1.8;color:#222;white-space:pre-line;max-width:640px}
 @media print{
   body{background:#fff;color:#111}
   .lado,.tabs,.topo .accoes,.naoimprime{display:none!important}
   .sala{display:block;padding:0}
-  .imp{padding:0 0 24px}
-  .imp .p{page-break-inside:avoid;break-inside:avoid;border-bottom:1px solid #ddd;
-    padding:18px 0;display:flex;gap:18px}
-  .imp img{width:180px;border:1px solid #ddd}
-  .imp .legenda{color:#333;white-space:pre-line;font-size:11px}
+  body.so-imp .sala{display:none!important}
+  .imp{display:none}
+  body.so-imp .imp{display:block;padding:0 0 24px}
 }
 </style>
 </head>
@@ -259,6 +280,8 @@ var semanaSel = null;                       // inicio (yyyy-mm-dd) da semana abe
 var aba = "feed", vista = "grelha", filtro = "todas";
 var aberta = null, laminaSel = null, diaAberto = null;
 var editando = false, rascunho = "", ocupado = false, erroMsg = "";
+var pdfPeca = null;                          // chave da peça no modo PDF (null = todas)
+var PDFQ = new URLSearchParams(location.search).get("pdf");
 var eu = location.hash.indexOf("agencia") >= 0 ? "agencia" : "cliente";
 var nome = localStorage.getItem("sala_nome_" + SLUG) || "";
 
@@ -328,6 +351,22 @@ function rotuloSemana(s){ return s.titulo || ("Semana de " + faixaSemana(s)); }
 function daSemana(){
   if (!semanaSel) return D.pecas;
   return D.pecas.filter(function(p){ return p.semana === semanaSel; });
+}
+function diaSP(iso){
+  return new Date(iso).toLocaleDateString("pt-BR", { timeZone:"America/Sao_Paulo" });
+}
+// n.º de publicação dentro do dia: a peça 1 é a primeira a sair
+function numeroDa(p){
+  var dia = diaSP(p.publicar_em);
+  var doDia = D.pecas.filter(function(x){ return diaSP(x.publicar_em) === dia; })
+    .sort(function(a,b){ return a.publicar_em < b.publicar_em ? -1 : 1; });
+  for (var i=0;i<doDia.length;i++) if (doDia[i].chave === p.chave) return i+1;
+  return 1;
+}
+var MESES_C = ["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"];
+function diaCurto(iso){
+  var d = new Date(new Date(iso).getTime() - 3*3600*1000);
+  return ("0" + d.getUTCDate()).slice(-2) + MESES_C[d.getUTCMonth()];
 }
 function doFeed(){ return daSemana().filter(function(p){ return p.tipo === "post" || p.tipo === "carrossel"; }); }
 function dosReels(){ return daSemana().filter(function(p){ return p.tipo === "reel"; }); }
@@ -530,7 +569,7 @@ function celHTML(p){
           '</span></div>') +
     '</div>' +
     '<div class="cap"><b>' + quando(p.publicar_em) + '</b> · ' + hora(p.publicar_em) + '<br>' +
-      esc(tipoRotulo(p)) + '</div></button>';
+      esc(tipoRotulo(p)) + ' <span style="opacity:.65">· nº ' + numeroDa(p) + '</span></div></button>';
 }
 
 function linhaHTML(p){
@@ -553,20 +592,14 @@ function linhaHTML(p){
 
 // ------------------------------------------------------------- peca aberta
 function baixarHTML(p, lam){
-  var MESES = ["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"];
-  var d = new Date(new Date(p.publicar_em).getTime() - 3*3600*1000);
-  var dia = ("0" + d.getUTCDate()).slice(-2) + MESES[d.getUTCMonth()];
-  var prefixo = p.tipo === "post" ? "feed" : p.tipo;
-  var base = prefixo + "_" + dia;
+  var dia = diaCurto(p.publicar_em);
   var prontas = p.laminas.filter(function(l){ return l.asset; });
   var temTxt = !!p.legenda || p.laminas.some(function(l){ return l.guiao; }) ||
     ((p.tipo === "reel" || p.tipo === "stories") && p.laminas.length > 0);
   if (!prontas.length && !temTxt) return "";
   var partes = [];
   if (lam && lam.asset){
-    var nn = ("0" + lam.indice).slice(-2);
-    var nomeDl = (p.tipo === "carrossel" ? "slide_" + nn + "_" + dia
-                : p.tipo === "stories" ? "placa_" + nn + "_" + dia : base) + ".webp";
+    var nomeDl = "IG_" + p.tipo + "_" + lam.indice + "_" + dia + ".webp";
     partes.push('<a class="bt linha" href="' + IMG + encodeURI(lam.asset) +
       '" download="' + esc(nomeDl) + '">' + svg(I.baixar,17) +
       (p.laminas.length > 1 ? 'Baixar esta lâmina' : 'Baixar a arte') + '</a>');
@@ -576,11 +609,15 @@ function baixarHTML(p, lam){
     : 'Baixar a copy e a direção (txt)';
   partes.push('<a class="bt linha" href="' + ZIP + encodeURIComponent(p.chave) + '">' +
     svg(I.baixar,17) + rot + '</a>');
+  partes.push('<button class="bt linha" data-pdf="' + esc(p.chave) + '">' + svg(I.doc,17) +
+    'Guardar o PDF desta peça</button>');
   var nota = prontas.length && prontas.length < p.laminas.length
     ? '<div class="nota" style="margin-top:9px">' + prontas.length + ' de ' + p.laminas.length +
       ' artes prontas — o pacote traz as que já existem, com a copy em txt.</div>' : "";
   return '<section class="naoimprime"><div class="eyebrow" style="color:var(--mute);margin-bottom:9px">' +
     'Baixar</div><div style="display:flex;flex-direction:column;gap:8px">' + partes.join("") + '</div>' +
+    '<div class="nota" style="margin-top:9px">O pacote vem organizado: pasta do dia → IG → formato → ' +
+    'IG_' + esc(p.tipo) + '_1_' + esc(dia) + '…</div>' +
     nota + '</section>';
 }
 
@@ -667,24 +704,26 @@ function pecaHTML(p){
       '<div><span>Sai a</span><span>' + quando(p.publicar_em) + ' · ' + hora(p.publicar_em) +
         (p.nota ? ' · ' + esc(p.nota) : "") + '</span></div>' +
       '<div><span>Formato</span><span>' + esc(tipoRotulo(p)) + '</span></div>' +
+      '<div><span>Ordem no dia</span><span>nº ' + numeroDa(p) + ' — o 1 sai primeiro</span></div>' +
       (p.pilar ? '<div><span>Pilar</span><span>' + esc(p.pilar) + '</span></div>' : "") +
       '<div><span>Estado</span><span>' + esc(ROTULO[p.estado]) + '</span></div>' +
     '</section>' +
     '<section><div class="eyebrow" style="color:var(--mute);margin-bottom:9px">A sua decisão</div>' +
       '<div class="decisao">' + decisao + '</div>' +
       '<div class="nota" style="margin-top:9px">' + ajuda + '</div></section>' +
-    baixarHTML(p, lam) +
-    '<section class="conversa"><div style="display:flex;align-items:center;justify-content:space-between">' +
+    '<section><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:9px">' +
       '<span class="eyebrow" style="color:var(--mute)">Comentários</span>' +
       (laminaSel ? '<span style="font-size:11px;color:var(--mute)">lâmina ' + laminaSel + '</span>' : "") +
-      '</div>' + comentarios + '</section>' +
-    '<section><textarea id="cx-com" placeholder="' +
+      '</div>' +
+      '<textarea id="cx-com" placeholder="' +
       (laminaSel ? "O que quer mudar na lâmina " + laminaSel + "?" : "O que quer mudar nesta peça?") +
       '"></textarea>' +
       '<div style="margin-top:10px"><button class="bt forte" data-comentar="' + esc(p.chave) +
         '">Guardar comentário</button></div>' +
       '<div class="nota" style="margin-top:9px">Ao guardar, a peça passa a ' +
-        '<b style="color:var(--warn)">Aprovado com alteração</b>.</div></section>' +
+        '<b style="color:var(--warn)">Aprovado com alteração</b>.</div>' +
+      '<div class="conversa" style="margin-top:16px">' + comentarios + '</div></section>' +
+    baixarHTML(p, lam) +
   '</div>';
 
   return topoHTML(esc(p.titulo),
@@ -786,6 +825,31 @@ function estrategiaHTML(){
     'margin-bottom:11px">As regras que atravessam tudo</div>' +
     e.regras.map(function(r){ return '<div class="regra"><span style="color:var(--brandsoft)">' +
       svg(I.ok,14,2.2) + '</span><span>' + esc(r) + '</span></div>'; }).join("") + '</div>');
+  // a ordem de publicação: o nº que acompanha a peça no site e no nome do
+  // ficheiro baixado — o nº 1 é o primeiro a sair (e o último a aparecer na
+  // grelha, porque a grelha mostra sempre o mais novo primeiro)
+  var ordenadas = daSemana().slice().sort(function(a,b){ return a.publicar_em < b.publicar_em ? -1 : 1; });
+  if (ordenadas.length){
+    var porDia = {};
+    ordenadas.forEach(function(p){ var d = quando(p.publicar_em); (porDia[d] = porDia[d] || []).push(p); });
+    var linhasOrd = Object.keys(porDia).map(function(d){
+      return '<div style="padding:6px 0">' +
+        '<div class="eyebrow" style="color:var(--brandsoft);margin-bottom:4px">' + esc(d) + '</div>' +
+        porDia[d].map(function(p){
+          return '<div style="display:flex;gap:10px;align-items:baseline;padding:3px 0;font-size:12.5px">' +
+            '<span class="serif" style="width:26px;flex:none;color:var(--brand)">' + numeroDa(p) + 'º</span>' +
+            '<span style="width:46px;flex:none;color:var(--mute)">' + hora(p.publicar_em) + '</span>' +
+            '<span style="flex:1;line-height:1.45;color:var(--dim)">' + esc(tipoRotulo(p).split(" · ")[0]) +
+              ' — ' + esc(p.titulo) + '</span></div>';
+        }).join("") + '</div>';
+    }).join("");
+    partes.push('<div class="bloco"><div class="eyebrow" style="color:var(--mute);margin-bottom:5px">' +
+      'A ordem de publicação</div>' +
+      '<div style="font-size:11px;color:var(--mute);line-height:1.5;margin-bottom:8px">' +
+      'O nº acompanha a peça no site e no nome do ficheiro baixado. O nº 1 sai primeiro — ' +
+      'e por isso fica por baixo na grelha, que mostra sempre o mais novo à frente.</div>' +
+      linhasOrd + '</div>');
+  }
   if (e.nota) partes.push('<div class="aviso">' + svg(I.relogio,16) + '<div>' + esc(e.nota) + '</div></div>');
   if (!partes.length) partes.push('<div class="carga">A estratégia desta semana ainda não foi escrita.</div>');
   return topoHTML("A estratégia da semana",
@@ -808,20 +872,62 @@ function fimHTML(){
   '</div>';
 }
 
+// O PDF: uma peça (um "conjunto") por página, no mínimo. Duas colunas por
+// lâmina — a arte à esquerda; à direita SÓ a copy do que a Teneci grava
+// (producao = por_gravar). No fim da peça, o texto da legenda.
+function impPecaHTML(p){
+  var story = p.tipo === "stories" || p.tipo === "reel";
+  var filas = p.laminas.map(function(l){
+    var arte = l.asset
+      ? '<img src="' + IMG + encodeURI(l.asset) + '" alt="">'
+      : '<div class="semarte' + (story ? " story" : "") + '">' +
+        (l.producao === "por_gravar" ? "vídeo<br>por gravar" : "por<br>desenhar") + '</div>';
+    var copy = "";
+    if (l.producao === "por_gravar" && l.guiao){
+      copy = '<div class="gravar">O que você fala neste vídeo</div>' +
+             '<div class="guiao-imp">' + esc(l.guiao) + '</div>';
+    }
+    return '<div class="fila">' +
+      '<div class="col-arte">' + arte +
+        (p.laminas.length > 1 ? '<div class="rot">' + l.indice +
+          (l.rotulo ? ' · ' + esc(l.rotulo) : "") + '</div>' : "") + '</div>' +
+      '<div class="col-copy">' + copy + '</div></div>';
+  }).join("");
+  var legenda = p.legenda
+    ? '<div class="leg"><div class="rot">Legenda</div><div class="texto">' +
+      esc(p.legenda.texto) + '</div></div>' : "";
+  return '<div class="pagina">' +
+    '<div class="cab"><div class="linha1">IG · ' + esc(p.tipo) + ' · nº ' + numeroDa(p) +
+      ' do dia · ' + quando(p.publicar_em) + ' · ' + hora(p.publicar_em) +
+      ' · ' + esc(ROTULO[p.estado]) + '</div>' +
+    '<h2>' + esc(p.titulo) + '</h2></div>' +
+    filas + legenda + '</div>';
+}
+
 function impressaoHTML(){
-  return '<div class="imp" style="display:none">' + D.pecas.map(function(p){
-    var l = p.laminas.filter(function(x){ return x.asset; })[0];
-    return '<div class="p">' +
-      (l ? '<img src="' + IMG + encodeURI(l.asset) + '" alt="">' : "") +
-      '<div><div style="font-weight:700">' + esc(p.titulo) + '</div>' +
-      '<div style="font-size:11px;margin:4px 0 8px">' + quando(p.publicar_em) + ' · ' + hora(p.publicar_em) +
-        ' · ' + esc(tipoRotulo(p)) + ' · ' + esc(ROTULO[p.estado]) +
-        (p.decidido_por ? ' por ' + esc(p.decidido_por) : "") + '</div>' +
-      (p.legenda ? '<div class="legenda">' + esc(p.legenda.texto) + '</div>' : "") +
-      (p.comentarios.length ? '<div style="font-size:11px;margin-top:8px"><b>Pedidos:</b> ' +
-        p.comentarios.map(function(c){ return esc(c.texto); }).join(" / ") + '</div>' : "") +
-      '</div></div>';
-  }).join("") + '</div>';
+  var pecas = pdfPeca
+    ? [pecaPorChave(pdfPeca)].filter(Boolean)
+    : D.pecas.slice().sort(function(a,b){ return a.publicar_em < b.publicar_em ? -1 : 1; });
+  return '<div class="imp">' + pecas.map(impPecaHTML).join("") + '</div>';
+}
+
+function imprimir(chave){
+  pdfPeca = chave || null;
+  desenhar();
+  document.body.classList.add("so-imp");
+  var imgs = Array.prototype.slice.call(document.querySelectorAll(".imp img"));
+  var espera = imgs.map(function(im){
+    return im.complete ? Promise.resolve() : new Promise(function(res){
+      im.onload = im.onerror = res; });
+  });
+  Promise.race([Promise.all(espera), new Promise(function(res){ setTimeout(res, 4000); })])
+    .then(function(){
+      window.print();
+      setTimeout(function(){
+        document.body.classList.remove("so-imp");
+        pdfPeca = null; desenhar();
+      }, 400);
+    });
 }
 
 // ------------------------------------------------------------------ montar
@@ -858,7 +964,7 @@ function desenhar(){
 document.addEventListener("click", function(ev){
   var alvo = ev.target.closest ? ev.target.closest("[data-aba],[data-abrir],[data-vista],[data-filtro]," +
     "[data-lamina],[data-voltar],[data-estado],[data-comentar],[data-editar],[data-cancelar]," +
-    "[data-guardar-legenda],[data-imprimir],[data-semana],[data-semanas]") : null;
+    "[data-guardar-legenda],[data-imprimir],[data-pdf],[data-semana],[data-semanas]") : null;
   if (!alvo) return;
   var d = alvo.dataset;
 
@@ -897,14 +1003,15 @@ document.addEventListener("click", function(ev){
     editando = false;
     enviar(d.guardarLegenda, "legenda", { texto: t });
   }
-  else if (d.imprimir){
-    document.querySelector(".imp").style.display = "block";
-    window.print();
-    setTimeout(function(){ document.querySelector(".imp").style.display = "none"; }, 500);
-  }
+  else if (d.imprimir){ imprimir(null); }
+  else if (d.pdf){ imprimir(d.pdf); }
 });
 
-puxar().catch(function(e){
+puxar().then(function(){
+  // ?pdf=<chave> abre direto a folha de impressão dessa peça (serve também
+  // para gerar o PDF por chrome headless, sem clique)
+  if (PDFQ){ pdfPeca = PDFQ; desenhar(); document.body.classList.add("so-imp"); }
+}).catch(function(e){
   document.getElementById("raiz").innerHTML =
     '<div class="aviso-erro" style="margin:32px">Não consegui abrir esta sala. ' +
     'Verifique a ligação e recarregue a página.</div>';
