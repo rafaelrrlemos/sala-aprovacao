@@ -1,0 +1,845 @@
+<!doctype html>
+<html lang="pt-BR">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="robots" content="noindex,nofollow">
+<title>Sala de aprovação</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Instrument+Sans:wght@400;500;600;700&display=swap">
+<style>
+*{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#211E28;--surface:#2A2632;--surface2:#332E3D;--line:#3B3546;
+  --ink:#F6F1E8;--dim:#B9B2C4;--mute:#9C93AE;--brand:#6B5B95;--brandsoft:#C6B7E0;
+  --ok:#7FA98A;--okink:#0F1A13;--warn:#E0B15F;--warnink:#241A07;--pend:#403A4C;--pendink:#C6BFD1;
+}
+html,body{background:var(--bg);color:var(--ink);
+  font-family:'Instrument Sans',system-ui,'Segoe UI',sans-serif;-webkit-font-smoothing:antialiased}
+.serif{font-family:Georgia,'Times New Roman',serif}
+.eyebrow{font-size:10px;letter-spacing:.22em;text-transform:uppercase;font-weight:600}
+button{font:inherit;color:inherit;background:none;border:none;cursor:pointer;text-align:left}
+img{display:block;max-width:100%}
+a{color:var(--brandsoft)}
+.esconde{display:none!important}
+
+/* ---------------------------------------------------------------- estrutura */
+.sala{display:flex;min-height:100vh;align-items:stretch}
+.lado{width:260px;flex:none;background:var(--surface);border-right:1px solid var(--line);
+  display:flex;flex-direction:column;padding:22px 16px;gap:20px;position:sticky;top:0;height:100vh}
+.corpo{flex:1;min-width:0;display:flex;flex-direction:column;padding-bottom:0}
+.topo{display:flex;align-items:flex-end;justify-content:space-between;gap:20px;
+  padding:26px 32px 18px;border-bottom:1px solid var(--line);flex-wrap:wrap}
+.topo h1{font-family:Georgia,serif;font-size:26px;line-height:1.15;font-weight:400}
+.topo .sub{font-size:12.5px;color:var(--mute);margin-top:6px}
+.tabs{display:none}
+
+/* perfil e progresso */
+.perfil{display:flex;align-items:center;gap:12px;padding:0 4px}
+.av{width:44px;height:44px;border-radius:999px;flex:none;background:var(--brand);
+  display:flex;align-items:center;justify-content:center;font-size:20px;font-family:Georgia,serif}
+.caixa{padding:14px;border-radius:12px;background:var(--bg);border:1px solid var(--line);
+  display:flex;flex-direction:column;gap:11px}
+.barra{height:5px;border-radius:999px;background:var(--surface2);overflow:hidden}
+.barra i{display:block;height:100%;background:var(--brandsoft);border-radius:999px}
+.nav{display:flex;flex-direction:column;gap:3px}
+.nav button{display:flex;align-items:center;gap:12px;min-height:46px;padding:0 14px;
+  border-radius:10px;color:var(--mute);font-size:14px;font-weight:500;width:100%}
+.nav button.on{background:var(--surface2);color:var(--ink);font-weight:600}
+
+/* selos */
+.selo{display:inline-flex;align-items:center;gap:6px;padding:5px 10px 5px 8px;border-radius:999px;
+  font-size:11px;font-weight:600;white-space:nowrap}
+.selo.aprovado{background:var(--ok);color:var(--okink)}
+.selo.alteracao{background:var(--warn);color:var(--warnink)}
+.selo.pendente{background:var(--pend);color:var(--pendink)}
+.selinho{width:20px;height:20px;border-radius:999px;display:flex;align-items:center;justify-content:center}
+.selinho.aprovado{background:var(--ok);color:var(--okink)}
+.selinho.alteracao{background:var(--warn);color:var(--warnink)}
+.selinho.pendente{background:var(--pend);color:var(--pendink)}
+
+/* controlos */
+.filtros{display:flex;gap:4px;border:1px solid var(--line);border-radius:999px;padding:3px;flex-wrap:wrap}
+.filtros button{display:flex;align-items:center;gap:7px;min-height:36px;padding:0 13px;
+  border-radius:999px;font-size:12.5px;color:var(--dim);white-space:nowrap;flex:none}
+.filtros button.on{background:var(--surface2);color:var(--ink);font-weight:600}
+.ponto{width:6px;height:6px;border-radius:999px}
+.vistas{display:flex;gap:2px;border:1px solid var(--line);border-radius:11px;padding:2px}
+.vistas button{width:38px;height:38px;border-radius:9px;display:flex;align-items:center;
+  justify-content:center;color:var(--mute)}
+.vistas button.on{background:var(--surface2);color:var(--ink)}
+
+/* grelha */
+.grelha{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:20px;padding:24px 32px 40px}
+.cel{display:flex;flex-direction:column;gap:6px;width:100%;align-items:stretch}
+.arte{display:block;position:relative;width:100%;aspect-ratio:4/5;overflow:hidden;background:var(--surface2);
+  border:1px solid var(--line)}
+.arte img{width:100%;height:100%;object-fit:cover}
+.arte.story{aspect-ratio:9/16}
+.arte .badge{position:absolute;top:6px;left:6px}
+.vazia{width:100%;height:100%;display:flex!important;align-items:center;justify-content:center;text-align:center;
+  padding:10px;color:var(--mute);
+  background:repeating-linear-gradient(135deg,var(--surface2) 0 8px,var(--surface) 8px 16px)}
+.cap{display:block;font-size:11px;color:var(--mute);line-height:1.4}
+.cap b{color:var(--dim);font-weight:600}
+
+/* lista */
+.linha{display:grid;grid-template-columns:52px 104px 108px 1fr 260px 150px;gap:16px;align-items:center;
+  padding:12px 32px;border-top:1px solid var(--line);width:100%}
+.linha .mini{display:block;width:52px;height:65px;overflow:hidden;background:var(--surface2)}
+.linha .mini img{width:100%;height:100%;object-fit:cover}
+.cabl{display:grid;grid-template-columns:52px 104px 108px 1fr 260px 150px;gap:16px;
+  padding:0 32px 10px;align-items:end;color:var(--mute)}
+
+/* peca aberta */
+.peca{flex:1;display:flex;align-items:stretch;min-height:0}
+.centro{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;
+  padding:28px 32px 40px;gap:18px}
+.slide{width:100%;max-width:420px;aspect-ratio:4/5;overflow:hidden;background:var(--surface2);
+  box-shadow:0 20px 44px rgba(0,0,0,.38)}
+.slide.story{aspect-ratio:9/16;max-width:300px}
+.slide img{width:100%;height:100%;object-fit:cover}
+.tira{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+.tira button{display:block;width:74px;flex:none;position:relative;line-height:0}
+.tira .t{display:block;position:relative;width:74px;height:93px;overflow:hidden;
+  background:var(--surface2);border:1px solid var(--line)}
+.tira .t.story{height:132px}
+.tira button.on .t{outline:2px solid var(--brandsoft);outline-offset:2px}
+.tira img{width:100%;height:100%;object-fit:cover}
+.tira .n{position:absolute;bottom:4px;left:4px;padding:1px 6px;border-radius:999px;
+  background:rgba(20,18,26,.78);color:#F6F1E8;font-size:9px;font-weight:700}
+.painel{width:100%;max-width:560px;padding:20px 22px;border-radius:14px;background:var(--surface);
+  border:1px solid var(--line)}
+.legenda{font-size:13.5px;line-height:1.75;color:var(--dim);white-space:pre-line}
+.rail{width:340px;flex:none;background:var(--surface);border-left:1px solid var(--line);
+  display:flex;flex-direction:column}
+.rail section{padding:18px 20px;border-bottom:1px solid var(--line)}
+.rail section:last-child{border-bottom:none}
+.ficha div{display:flex;justify-content:space-between;gap:12px;font-size:12.5px;padding:5px 0}
+.ficha span:first-child{color:var(--mute)}
+.ficha span:last-child{color:var(--dim);text-align:right}
+.decisao{display:flex;flex-direction:column;gap:9px}
+.decisao button{display:flex;align-items:center;justify-content:space-between;min-height:48px;
+  padding:0 16px;border-radius:10px;border:1px solid var(--line);font-size:13.5px;
+  color:var(--mute);font-weight:500;width:100%}
+.decisao button.aprovado.on{background:var(--ok);color:var(--okink);border-color:var(--ok);font-weight:600}
+.decisao button.alteracao.on{background:var(--warn);color:var(--warnink);border-color:var(--warn);font-weight:600}
+.decisao button.pendente.on{background:var(--pend);color:var(--pendink);border-color:var(--pend);font-weight:600}
+.conversa{display:flex;flex-direction:column;gap:16px;flex:1}
+.com{display:flex;gap:10px}
+.com .a{width:30px;height:30px;border-radius:999px;flex:none;display:flex;align-items:center;
+  justify-content:center;font-size:13px;font-family:Georgia,serif;background:var(--brand)}
+.com.agencia .a{background:var(--surface2);color:var(--dim)}
+.com .quem{font-size:11px;color:var(--mute);margin-bottom:4px}
+.com .quem b{color:var(--dim);font-weight:600}
+.com .t{font-size:13px;line-height:1.6;background:var(--surface2);border-radius:10px;padding:10px 12px}
+textarea{width:100%;border:1px solid var(--line);border-radius:10px;background:var(--bg);color:var(--ink);
+  padding:11px 12px;min-height:88px;font:inherit;font-size:13px;line-height:1.6;resize:vertical}
+textarea::placeholder{color:var(--mute)}
+.bt{display:flex;align-items:center;justify-content:center;gap:8px;min-height:46px;border-radius:10px;
+  font-size:13px;font-weight:600;width:100%}
+.bt.forte{background:var(--brandsoft);color:#231F2C}
+.bt.ok{background:var(--ok);color:var(--okink)}
+.bt.linha{border:1px solid var(--line);color:var(--ink)}
+a.bt{text-decoration:none}
+.aviso{padding:12px 14px;border-radius:10px;background:var(--surface2);font-size:11.5px;
+  line-height:1.55;color:var(--dim);display:flex;gap:10px}
+.nota{font-size:11.5px;color:var(--mute);line-height:1.55}
+
+/* stories e reels */
+.dias{display:flex;gap:10px;padding:18px 32px 6px;flex-wrap:wrap}
+.dia{display:flex;flex-direction:column;align-items:center;gap:7px;width:86px}
+.anel{display:block;width:72px;height:72px;border-radius:999px;padding:3px;
+  border:2px solid var(--line);overflow:hidden}
+.anel.montado{border-color:var(--brandsoft)}
+.anel.aprovado{border-color:var(--ok)}
+.anel img{width:100%;height:100%;object-fit:cover;border-radius:999px}
+.anel .vazia{border-radius:999px}
+.placas{display:flex;flex-wrap:wrap;gap:12px;padding:22px 32px 8px}
+.placa{width:96px;flex:none;display:flex;flex-direction:column;gap:6px;position:relative}
+.placa .p{width:96px;height:171px;overflow:hidden;position:relative;border-radius:7px;background:var(--surface2)}
+.placa img{width:100%;height:100%;object-fit:cover}
+.placa .num{position:absolute;top:6px;left:6px;padding:2px 7px;border-radius:999px;
+  background:rgba(20,18,26,.78);color:#F6F1E8;font-size:10px;font-weight:700}
+.placa .video{position:absolute;inset:0;background:rgba(33,30,40,.6);display:flex;
+  align-items:center;justify-content:center;color:var(--warn)}
+.cartoes{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;padding:22px 32px 34px}
+
+/* estrategia */
+.est{display:flex;flex-direction:column;gap:12px;padding:22px 32px 40px;max-width:780px}
+.est .bloco{padding:16px 18px;border-radius:12px;background:var(--surface);border:1px solid var(--line)}
+.est .andar{border-left:3px solid var(--line)}
+.est .andar.on{border-left-color:var(--brandsoft)}
+.est h3{font-family:Georgia,serif;font-size:19px;font-weight:400;margin:6px 0 5px}
+.est .ritmo{display:flex;gap:12px;align-items:baseline;padding:4px 0}
+.est .ritmo b{width:56px;flex:none;font-family:Georgia,serif;font-size:14px;
+  color:var(--brandsoft);font-weight:400}
+.est .regra{display:flex;gap:10px;align-items:flex-start;padding:4px 0;font-size:12.5px;
+  line-height:1.5;color:var(--dim)}
+
+/* fim */
+.fim{max-width:520px;margin:0 auto;padding:32px;display:flex;flex-direction:column;
+  align-items:center;text-align:center;gap:14px}
+.fim .circ{width:56px;height:56px;border-radius:999px;background:var(--ok);color:var(--okink);
+  display:flex;align-items:center;justify-content:center}
+
+/* estados de carga */
+.carga{padding:60px 32px;text-align:center;color:var(--mute);font-size:13px}
+.aviso-erro{margin:16px 32px;padding:14px 16px;border-radius:10px;background:#3A2226;
+  color:#F2D6D6;font-size:13px;line-height:1.6}
+
+/* --------------------------------------------------------------- telemovel */
+@media (max-width:899px){
+  .sala{display:block;min-height:100vh;padding-bottom:78px}
+  .lado{width:auto;height:auto;position:static;border-right:none;border-bottom:1px solid var(--line);
+    padding:16px 14px;gap:14px}
+  .lado .nav{display:none}
+  .lado .rodape{display:none}
+  .topo{padding:16px 14px 12px;align-items:flex-start;flex-direction:column;gap:12px}
+  .topo h1{font-size:20px}
+  .topo .accoes{width:100%;display:flex;gap:8px;justify-content:space-between;align-items:center}
+  .filtros{overflow-x:auto;flex-wrap:nowrap;scrollbar-width:none}
+  .filtros::-webkit-scrollbar{display:none}
+  .topo .accoes{flex-wrap:nowrap}
+  .grelha{grid-template-columns:repeat(3,minmax(0,1fr));gap:8px;padding:12px 14px 24px}
+  .cartoes{grid-template-columns:repeat(2,minmax(0,1fr));gap:12px;padding:14px}
+  .linha,.cabl{grid-template-columns:52px 1fr 92px;gap:12px;padding-left:14px;padding-right:14px}
+  .linha .col-formato,.cabl .col-formato,.linha .col-legenda,.cabl .col-legenda{display:none}
+  .peca{flex-direction:column}
+  .centro{padding:16px 14px 20px}
+  .rail{width:auto;border-left:none;border-top:1px solid var(--line)}
+  .dias,.placas,.est{padding-left:14px;padding-right:14px}
+  .tabs{display:flex;position:fixed;left:0;right:0;bottom:0;background:var(--surface);
+    border-top:1px solid var(--line);padding:4px 6px calc(8px + env(safe-area-inset-bottom));z-index:20}
+  .tabs button{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:center;
+    gap:4px;min-height:56px;color:var(--mute);font-size:10px;font-weight:500}
+  .tabs button.on{color:var(--ink);font-weight:600}
+  .tabs .risco{display:block;width:20px;height:2px;border-radius:2px;background:transparent}
+  .tabs button.on .risco{background:var(--brandsoft)}
+}
+
+/* ---------------------------------------------------------------- impressao */
+@media print{
+  body{background:#fff;color:#111}
+  .lado,.tabs,.topo .accoes,.naoimprime{display:none!important}
+  .sala{display:block;padding:0}
+  .imp{padding:0 0 24px}
+  .imp .p{page-break-inside:avoid;break-inside:avoid;border-bottom:1px solid #ddd;
+    padding:18px 0;display:flex;gap:18px}
+  .imp img{width:180px;border:1px solid #ddd}
+  .imp .legenda{color:#333;white-space:pre-line;font-size:11px}
+}
+</style>
+</head>
+<body>
+<div id="raiz"><div class="carga">A abrir a sala…</div></div>
+
+<script>
+(function(){
+"use strict";
+var SLUG = new URLSearchParams(location.search).get("c") || "";
+if (!SLUG){
+  document.addEventListener("DOMContentLoaded", function(){
+    document.getElementById("raiz").innerHTML =
+      '<div class="carga">Este link está incompleto. Peça o link certo a quem lhe enviou.</div>';
+  });
+}
+var API = "https://fpsqphfgxhrwsxtrbqnk.supabase.co/functions/v1/sala/api/" + encodeURIComponent(SLUG);
+var IMG = "https://fpsqphfgxhrwsxtrbqnk.supabase.co/functions/v1/sala/a/";
+var ZIP = "https://fpsqphfgxhrwsxtrbqnk.supabase.co/functions/v1/sala/z/" + encodeURIComponent(SLUG) + "/";
+
+var D = null;
+var aba = "feed", vista = "grelha", filtro = "todas";
+var aberta = null, laminaSel = null, diaAberto = null;
+var editando = false, rascunho = "", ocupado = false, erroMsg = "";
+var eu = location.hash.indexOf("agencia") >= 0 ? "agencia" : "cliente";
+var nome = localStorage.getItem("sala_nome_" + SLUG) || "";
+
+// ------------------------------------------------------------------- utils
+function esc(s){ var d = document.createElement("div"); d.textContent = s == null ? "" : String(s); return d.innerHTML; }
+function el(html){ var d = document.createElement("div"); d.innerHTML = html; return d.firstElementChild; }
+
+function svg(d, tam, esp){
+  return '<svg width="' + (tam||20) + '" height="' + (tam||20) + '" viewBox="0 0 24 24" fill="none" ' +
+    'stroke="currentColor" stroke-width="' + (esp||1.6) + '" stroke-linecap="round" ' +
+    'stroke-linejoin="round" style="display:block;flex:none">' + d + '</svg>';
+}
+var I = {
+  feed:'<rect x="3" y="3" width="18" height="18" rx="2"/><path d="M3 9h18M3 15h18M9 3v18M15 3v18"/>',
+  story:'<circle cx="12" cy="12" r="9" stroke-dasharray="3.2 3.2"/><circle cx="12" cy="12" r="3.6"/>',
+  reel:'<rect x="3" y="3" width="18" height="18" rx="3"/><path d="M3 8.5h18M8.6 3.2 11 8.5M14.2 3 16.6 8.5"/><path d="M10.6 12.2v4.6l4-2.3z"/>',
+  doc:'<path d="M5.5 3h8l5 5v13h-13z"/><path d="M13.5 3v5h5"/><path d="M8.5 13h7M8.5 17h4.5"/>',
+  ok:'<path d="m4.5 12.5 4.5 4.5L19.5 6.5"/>',
+  pen:'<path d="M4 20h4L20 8l-4-4L4 16z"/>',
+  relogio:'<circle cx="12" cy="12" r="8.5"/><path d="M12 7.2V12l3 2"/>',
+  chat:'<path d="M20.5 11.8c0 4-3.8 7.2-8.5 7.2-1 0-2-.15-2.9-.42L4 20l1.5-3.7C4.25 15.05 3.5 13.5 3.5 11.8c0-4 3.8-7.2 8.5-7.2s8.5 3.2 8.5 7.2z"/>',
+  texto:'<path d="M5 6.5V5h14v1.5M12 5v14M9 19h6"/>',
+  lista:'<rect x="3" y="4.5" width="6.5" height="6.5" rx="1.4"/><rect x="3" y="13" width="6.5" height="6.5" rx="1.4"/><path d="M13 7h8M13 16.2h8"/>',
+  volta:'<path d="M14.5 5 8 12l6.5 7"/>',
+  camara:'<path d="M15.5 8.5v7a2 2 0 0 1-2 2h-8a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2z"/><path d="m15.5 11.5 5-2.7v6.4l-5-2.7z"/>',
+  baixar:'<path d="M12 4v11M7.5 10.5 12 15l4.5-4.5M4.5 19.5h15"/>',
+  mail:'<rect x="3" y="5.5" width="18" height="13" rx="2"/><path d="m3.6 6.8 8.4 6 8.4-6"/>'
+};
+var ROTULO = { aprovado:"Aprovado", alteracao:"Com alteração", pendente:"Pendente" };
+var ICONE = { aprovado:I.ok, alteracao:I.pen, pendente:I.relogio };
+
+function selo(e){ return '<span class="selo ' + e + '">' + svg(ICONE[e],13,2.2) + ROTULO[e] + '</span>'; }
+function selinho(e){ return '<span class="selinho ' + e + '">' + svg(ICONE[e],12,2.4) + '</span>'; }
+
+function quando(iso, comHora){
+  var d = new Date(iso);
+  var o = { timeZone:"America/Sao_Paulo", day:"2-digit", month:"2-digit" };
+  var s = d.toLocaleDateString("pt-BR", o);
+  if (comHora){
+    var h = d.toLocaleTimeString("pt-BR", { timeZone:"America/Sao_Paulo", hour:"2-digit", minute:"2-digit" });
+    s += " · " + (h.replace(":00","h").replace(":","h"));
+  }
+  return s;
+}
+function hora(iso){
+  var h = new Date(iso).toLocaleTimeString("pt-BR",
+    { timeZone:"America/Sao_Paulo", hour:"2-digit", minute:"2-digit" });
+  return h.replace(":00","h").replace(":","h");
+}
+function tipoRotulo(p){
+  if (p.tipo === "carrossel") return "Carrossel · " + p.laminas.length;
+  if (p.tipo === "stories") return "Stories · " + p.laminas.length;
+  if (p.tipo === "reel") return "Reel";
+  return "Post";
+}
+function pecaPorChave(c){
+  for (var i=0;i<D.pecas.length;i++) if (D.pecas[i].chave === c) return D.pecas[i];
+  return null;
+}
+function doFeed(){ return D.pecas.filter(function(p){ return p.tipo === "post" || p.tipo === "carrossel"; }); }
+function dosReels(){ return D.pecas.filter(function(p){ return p.tipo === "reel"; }); }
+function dosStories(){ return D.pecas.filter(function(p){ return p.tipo === "stories"; }); }
+
+function arte(lam, classe){
+  var c = "arte " + (classe || "");
+  if (lam && lam.asset){
+    return '<div class="' + c + '"><img loading="lazy" src="' + IMG + encodeURI(lam.asset) +
+           '" alt=""></div>';
+  }
+  var txt = lam && lam.producao === "por_gravar" ? "por<br>gravar" : "por<br>desenhar";
+  return '<div class="' + c + '"><div class="vazia"><span class="eyebrow" style="line-height:1.6">' +
+         txt + '</span></div></div>';
+}
+
+// ------------------------------------------------------------------- rede
+function puxar(){
+  return fetch(API).then(function(r){
+    if (!r.ok) throw new Error("nao consegui abrir a sala");
+    return r.json();
+  }).then(function(j){ D = j; erroMsg = ""; desenhar(); });
+}
+
+function enviar(chave, accao, corpo){
+  if (!nome){
+    var n = prompt("Como se chama? (fica guardado neste telemóvel)");
+    if (!n) return Promise.resolve();
+    nome = n.trim().slice(0,80);
+    localStorage.setItem("sala_nome_" + SLUG, nome);
+  }
+  corpo.autor = nome;
+  corpo.autor_tipo = eu;
+  ocupado = true; desenhar();
+  return fetch(API + "/p/" + encodeURIComponent(chave) + "/" + accao, {
+    method:"POST", headers:{ "Content-Type":"application/json" }, body: JSON.stringify(corpo)
+  }).then(function(r){
+    if (!r.ok) return r.json().then(function(j){ throw new Error(j.erro || "falhou"); });
+    return r.json();
+  }).then(function(j){ D = j; erroMsg = ""; })
+    .catch(function(e){ erroMsg = "Não consegui guardar: " + e.message + ". Tente outra vez."; })
+    .then(function(){ ocupado = false; desenhar(); });
+}
+
+// --------------------------------------------------------------- fragmentos
+function ladoHTML(){
+  var c = D.cliente, pr = D.progresso;
+  var feitas = pr.total - pr.pendentes;
+  var pct = pr.total ? Math.round(100*feitas/pr.total) : 0;
+  var inicial = (c.nome || "?").trim().charAt(0).toUpperCase();
+  var navs = [["feed",I.feed,"Feed"],["stories",I.story,"Stories"],
+              ["reels",I.reel,"Reels"],["estrategia",I.doc,"Estratégia"]];
+  var nav = navs.map(function(n){
+    return '<button data-aba="' + n[0] + '" class="' + (aba===n[0]?"on":"") + '">' +
+           svg(n[1],20) + '<span>' + esc(n[2]) + '</span></button>';
+  }).join("");
+  return '<aside class="lado">' +
+    '<div class="perfil"><div class="av">' + esc(inicial) + '</div><div style="min-width:0">' +
+      '<div style="font-size:14px;font-weight:600">' + esc(c.arroba || c.nome) + '</div>' +
+      '<div style="font-size:11.5px;color:var(--mute);margin-top:2px">' + esc(c.descricao || "") + '</div>' +
+    '</div></div>' +
+    '<div class="caixa"><div class="eyebrow" style="color:var(--mute)">Ciclo aberto</div>' +
+      '<div class="serif" style="font-size:15px;line-height:1.3">' + esc(D.ciclo.titulo) + '</div>' +
+      '<div style="display:flex;justify-content:space-between;align-items:baseline;font-size:12px;color:var(--dim)">' +
+        '<span><b style="color:var(--ink)">' + feitas + ' de ' + pr.total + '</b> decididas</span>' +
+        '<span class="eyebrow" style="color:var(--mute)">faltam ' + pr.pendentes + '</span></div>' +
+      '<div class="barra"><i style="width:' + pct + '%"></i></div>' +
+      (pr.arquivadas ? '<div class="nota">A semana mais antiga já saiu do ar · ' +
+        pr.arquivadas + ' peça' + (pr.arquivadas > 1 ? 's' : '') + ' arquivada' +
+        (pr.arquivadas > 1 ? 's' : '') + '.</div>' : '') +
+    '</div>' +
+    '<nav class="nav">' + nav + '</nav>' +
+    '<div style="flex:1"></div>' +
+    '<div class="rodape aviso naoimprime">' + svg(I.mail,17) +
+      '<div>' + (pr.pendentes === 0
+        ? 'Está tudo decidido. Pode guardar o PDF quando quiser.'
+        : 'Quando as ' + pr.total + ' estiverem decididas, dá para guardar o PDF.') + '</div></div>' +
+  '</aside>';
+}
+
+function tabsHTML(){
+  var navs = [["feed",I.feed,"Feed"],["stories",I.story,"Stories"],
+              ["reels",I.reel,"Reels"],["estrategia",I.doc,"Estratégia"]];
+  return '<nav class="tabs naoimprime">' + navs.map(function(n){
+    return '<button data-aba="' + n[0] + '" class="' + (aba===n[0]?"on":"") + '">' + svg(n[1],21) +
+           '<span>' + esc(n[2]) + '</span><span class="risco"></span></button>';
+  }).join("") + '</nav>';
+}
+
+function topoHTML(titulo, sub, accoes){
+  return '<div class="topo"><div style="min-width:0"><h1 class="serif">' + titulo + '</h1>' +
+    '<div class="sub">' + sub + '</div></div>' +
+    '<div class="accoes" style="display:flex;align-items:center;gap:10px;flex-wrap:wrap">' +
+    (accoes||"") + '</div></div>';
+}
+
+function filtrosHTML(pecas){
+  var c = { todas: pecas.length, pendente:0, alteracao:0, aprovado:0 };
+  pecas.forEach(function(p){ c[p.estado]++; });
+  var itens = [["todas","Todas",""],["pendente","Pendentes","var(--mute)"],
+               ["alteracao","Com alteração","var(--warn)"],["aprovado","Aprovadas","var(--ok)"]];
+  return '<div class="filtros">' + itens.map(function(f){
+    return '<button data-filtro="' + f[0] + '" class="' + (filtro===f[0]?"on":"") + '">' +
+      (f[2] ? '<span class="ponto" style="background:' + f[2] + '"></span>' : "") +
+      '<span>' + f[1] + '</span><span style="color:var(--mute);font-weight:500">' + c[f[0]] + '</span>' +
+    '</button>';
+  }).join("") + '</div>';
+}
+
+function vistasHTML(){
+  return '<div class="vistas">' +
+    '<button data-vista="grelha" class="' + (vista==="grelha"?"on":"") + '">' + svg(I.feed,19) + '</button>' +
+    '<button data-vista="lista" class="' + (vista==="lista"?"on":"") + '">' + svg(I.lista,19) + '</button>' +
+  '</div>';
+}
+
+function filtrar(pecas){
+  if (filtro === "todas") return pecas;
+  return pecas.filter(function(p){ return p.estado === filtro; });
+}
+
+// ------------------------------------------------------------------- feed
+function feedHTML(){
+  var todas = doFeed();
+  var pecas = filtrar(todas);
+  var corpo;
+  if (!pecas.length){
+    corpo = '<div class="carga">Nada nesta gaveta.</div>';
+  } else if (vista === "grelha"){
+    corpo = '<div class="grelha">' + pecas.map(celHTML).join("") + '</div>';
+  } else {
+    corpo = '<div class="cabl">' +
+      ['<span></span>','<span class="eyebrow">Sai a</span>',
+       '<span class="eyebrow col-formato">Formato</span>','<span class="eyebrow">Peça</span>',
+       '<span class="eyebrow col-legenda">Legenda</span>','<span class="eyebrow">Estado</span>'].join("") +
+      '</div>' + pecas.map(linhaHTML).join("");
+  }
+  return topoHTML("Feed", esc(todas.length + " posts · " + D.ciclo.titulo.toLowerCase()),
+                  filtrosHTML(todas) + vistasHTML()) + corpo;
+}
+
+function celHTML(p){
+  return '<button class="cel" data-abrir="' + esc(p.chave) + '">' +
+    '<div class="arte"><span class="badge">' + selinho(p.estado) + '</span>' +
+      (p.laminas[0] && p.laminas[0].asset
+        ? '<img loading="lazy" src="' + IMG + encodeURI(p.laminas[0].asset) + '" alt="">'
+        : '<div class="vazia"><span class="eyebrow" style="line-height:1.6">' +
+          (p.laminas[0] && p.laminas[0].producao === "por_gravar" ? "por<br>gravar" : "por<br>desenhar") +
+          '</span></div>') +
+    '</div>' +
+    '<div class="cap"><b>' + quando(p.publicar_em) + '</b> · ' + hora(p.publicar_em) + '<br>' +
+      esc(tipoRotulo(p)) + '</div></button>';
+}
+
+function linhaHTML(p){
+  var l = p.laminas[0];
+  var leg = p.legenda
+    ? '<div style="font-size:12px;color:var(--mute);line-height:1.5;overflow:hidden;max-height:36px">' +
+      esc(p.legenda.texto.slice(0,120)) + '…</div>'
+    : '<div style="display:flex;align-items:center;gap:6px;font-size:12px;color:var(--warn)">' +
+      '<span class="ponto" style="background:var(--warn)"></span>Por escrever</div>';
+  return '<button class="linha" data-abrir="' + esc(p.chave) + '">' +
+    '<span class="mini">' + (l && l.asset ? '<img loading="lazy" src="' + IMG + encodeURI(l.asset) + '" alt="">' : "") + '</span>' +
+    '<span><span style="display:block;font-size:13px;font-weight:600">' + quando(p.publicar_em) + '</span>' +
+      '<span style="display:block;font-size:11.5px;color:var(--mute);margin-top:2px">' + hora(p.publicar_em) + '</span></span>' +
+    '<span class="col-formato" style="font-size:12.5px;color:var(--dim)">' + esc(tipoRotulo(p)) + '</span>' +
+    '<span style="font-size:13.5px;line-height:1.4">' + esc(p.titulo) + '</span>' +
+    '<span class="col-legenda">' + leg + '</span>' +
+    '<span style="display:flex;justify-content:flex-end">' + selo(p.estado) + '</span>' +
+  '</button>';
+}
+
+// ------------------------------------------------------------- peca aberta
+function baixarHTML(p, lam){
+  var MESES = ["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"];
+  var d = new Date(new Date(p.publicar_em).getTime() - 3*3600*1000);
+  var dia = ("0" + d.getUTCDate()).slice(-2) + MESES[d.getUTCMonth()];
+  var prefixo = p.tipo === "post" ? "feed" : p.tipo;
+  var base = prefixo + "_" + dia;
+  var prontas = p.laminas.filter(function(l){ return l.asset; });
+  var temTxt = !!p.legenda || p.laminas.some(function(l){ return l.guiao; }) ||
+    ((p.tipo === "reel" || p.tipo === "stories") && p.laminas.length > 0);
+  if (!prontas.length && !temTxt) return "";
+  var partes = [];
+  if (lam && lam.asset){
+    var nn = ("0" + lam.indice).slice(-2);
+    var nomeDl = (p.tipo === "carrossel" ? "slide_" + nn + "_" + dia
+                : p.tipo === "stories" ? "placa_" + nn + "_" + dia : base) + ".webp";
+    partes.push('<a class="bt linha" href="' + IMG + encodeURI(lam.asset) +
+      '" download="' + esc(nomeDl) + '">' + svg(I.baixar,17) +
+      (p.laminas.length > 1 ? 'Baixar esta lâmina' : 'Baixar a arte') + '</a>');
+  }
+  var rot = prontas.length
+    ? 'Baixar o pacote · ' + prontas.length + (prontas.length > 1 ? ' artes' : ' arte') + ' + copy'
+    : 'Baixar a copy e a direção (txt)';
+  partes.push('<a class="bt linha" href="' + ZIP + encodeURIComponent(p.chave) + '">' +
+    svg(I.baixar,17) + rot + '</a>');
+  var nota = prontas.length && prontas.length < p.laminas.length
+    ? '<div class="nota" style="margin-top:9px">' + prontas.length + ' de ' + p.laminas.length +
+      ' artes prontas — o pacote traz as que já existem, com a copy em txt.</div>' : "";
+  return '<section class="naoimprime"><div class="eyebrow" style="color:var(--mute);margin-bottom:9px">' +
+    'Baixar</div><div style="display:flex;flex-direction:column;gap:8px">' + partes.join("") + '</div>' +
+    nota + '</section>';
+}
+
+function pecaHTML(p){
+  var story = p.tipo === "stories" || p.tipo === "reel";
+  var idx = laminaSel || 1;
+  var lam = p.laminas.filter(function(l){ return l.indice === idx; })[0] || p.laminas[0];
+
+  var slide = '<div class="slide' + (story ? " story" : "") + '">' +
+    (lam && lam.asset
+      ? '<img src="' + IMG + encodeURI(lam.asset) + '" alt="">'
+      : '<div class="vazia"><span class="eyebrow">' +
+        (lam && lam.producao === "por_gravar" ? "vídeo por gravar" : "por desenhar") + '</span></div>') +
+    '</div>';
+
+  var tira = p.laminas.length > 1 ? '<div class="tira">' + p.laminas.map(function(l){
+    return '<button data-lamina="' + l.indice + '" class="' + (l.indice===idx?"on":"") + '">' +
+      '<span class="t' + (story?" story":"") + '">' +
+        (l.asset ? '<img loading="lazy" src="' + IMG + encodeURI(l.asset) + '" alt="">'
+                 : '<span class="vazia"></span>') +
+        (l.producao === "por_gravar" ? '<span class="video" style="position:absolute;inset:0;' +
+          'display:flex;align-items:center;justify-content:center;background:rgba(33,30,40,.55);' +
+          'color:var(--warn)">' + svg(I.camara,18) + '</span>' : "") +
+      '</span><span class="n">' + l.indice + '</span></button>';
+  }).join("") + '</div>' : "";
+
+  var guiao = lam && lam.guiao
+    ? '<div class="painel" style="border-left:3px solid var(--warn)">' +
+      '<div class="eyebrow" style="color:var(--warn);margin-bottom:8px">Lâmina ' + lam.indice +
+      ' · o que você fala</div>' +
+      '<div class="serif" style="font-size:14px;line-height:1.75">' + esc(lam.guiao) + '</div></div>'
+    : "";
+
+  var legenda;
+  if (editando){
+    legenda = '<div class="painel"><div class="eyebrow" style="color:var(--brandsoft);margin-bottom:10px">' +
+      'A sua versão da legenda</div>' +
+      '<textarea id="cx-legenda" style="min-height:200px">' + esc(rascunho) + '</textarea>' +
+      '<div style="display:flex;gap:8px;margin-top:12px">' +
+        '<button class="bt linha" data-cancelar="1">Cancelar</button>' +
+        '<button class="bt forte" data-guardar-legenda="' + esc(p.chave) + '">Guardar legenda</button>' +
+      '</div></div>';
+  } else if (p.legenda){
+    legenda = '<div class="painel">' +
+      '<div style="display:flex;align-items:center;justify-content:space-between;gap:12px;margin-bottom:12px">' +
+        '<span class="eyebrow" style="color:var(--mute)">Legenda · versão ' + p.legenda.versao +
+          ' · ' + esc(p.legenda.autor) + '</span>' +
+        '<button class="naoimprime" data-editar="1" style="display:flex;align-items:center;gap:7px;' +
+          'font-size:12px;color:var(--brandsoft);font-weight:600">' + svg(I.texto,15) + 'Reescrever</button>' +
+      '</div><div class="legenda">' + esc(p.legenda.texto) + '</div></div>';
+  } else {
+    legenda = '<div class="painel"><div class="aviso">' + svg(I.texto,17) +
+      '<div>A legenda desta peça ainda está por escrever. Assim que eu a escrever, aparece aqui.</div>' +
+      '</div></div>';
+  }
+
+  var centro = '<div class="centro">' + slide + tira +
+    (p.laminas.length > 1
+      ? '<div class="nota">Lâmina ' + idx + ' de ' + p.laminas.length +
+        ' · toque numa lâmina para comentar só nela</div>' : "") +
+    guiao + legenda + '</div>';
+
+  var comentarios = p.comentarios.map(function(c){
+    return '<div class="com ' + (c.autor_tipo === "agencia" ? "agencia" : "") + '">' +
+      '<div class="a">' + esc((c.autor||"?").charAt(0).toUpperCase()) + '</div>' +
+      '<div style="flex:1;min-width:0"><div class="quem"><b>' + esc(c.autor) + '</b> · ' +
+        quando(c.criado_em) + (c.lamina ? ' · lâmina ' + c.lamina : "") + '</div>' +
+        '<div class="t">' + esc(c.texto) + '</div></div></div>';
+  }).join("") || '<div class="nota">Ainda sem comentários nesta peça.</div>';
+
+  var decisao = ["aprovado","alteracao","pendente"].map(function(e){
+    return '<button class="' + e + ' ' + (p.estado===e?"on":"") + '" data-estado="' + e +
+           '" data-chave="' + esc(p.chave) + '">' + esc(ROTULO[e]) +
+           (p.estado===e ? svg(I.ok,16,2.2) : "") + '</button>';
+  }).join("");
+
+  var ajuda = { aprovado:"Vai assim para o ar, no dia e hora marcados.",
+                alteracao:"Publico depois de aplicar o que escreveu.",
+                pendente:"Enquanto estiver pendente, não publico." }[p.estado];
+
+  var rail = '<div class="rail naoimprime">' +
+    '<section class="ficha"><div class="serif" style="font-size:19px;line-height:1.25;margin-bottom:12px">' +
+      esc(p.titulo) + '</div>' +
+      '<div><span>Sai a</span><span>' + quando(p.publicar_em) + ' · ' + hora(p.publicar_em) +
+        (p.nota ? ' · ' + esc(p.nota) : "") + '</span></div>' +
+      '<div><span>Formato</span><span>' + esc(tipoRotulo(p)) + '</span></div>' +
+      (p.pilar ? '<div><span>Pilar</span><span>' + esc(p.pilar) + '</span></div>' : "") +
+      '<div><span>Estado</span><span>' + esc(ROTULO[p.estado]) + '</span></div>' +
+    '</section>' +
+    '<section><div class="eyebrow" style="color:var(--mute);margin-bottom:9px">A sua decisão</div>' +
+      '<div class="decisao">' + decisao + '</div>' +
+      '<div class="nota" style="margin-top:9px">' + ajuda + '</div></section>' +
+    baixarHTML(p, lam) +
+    '<section class="conversa"><div style="display:flex;align-items:center;justify-content:space-between">' +
+      '<span class="eyebrow" style="color:var(--mute)">Comentários</span>' +
+      (laminaSel ? '<span style="font-size:11px;color:var(--mute)">lâmina ' + laminaSel + '</span>' : "") +
+      '</div>' + comentarios + '</section>' +
+    '<section><textarea id="cx-com" placeholder="' +
+      (laminaSel ? "O que quer mudar na lâmina " + laminaSel + "?" : "O que quer mudar nesta peça?") +
+      '"></textarea>' +
+      '<div style="margin-top:10px"><button class="bt forte" data-comentar="' + esc(p.chave) +
+        '">Guardar comentário</button></div>' +
+      '<div class="nota" style="margin-top:9px">Ao guardar, a peça passa a ' +
+        '<b style="color:var(--warn)">Aprovado com alteração</b>.</div></section>' +
+  '</div>';
+
+  return topoHTML(esc(p.titulo),
+      esc(quando(p.publicar_em) + " · " + hora(p.publicar_em) + (p.nota ? " · " + p.nota : "")),
+      '<button data-voltar="1" style="display:flex;align-items:center;gap:9px;color:var(--mute);' +
+      'font-size:12.5px">' + svg(I.volta,17) + '<span>Voltar</span></button>') +
+    '<div class="peca">' + centro + rail + '</div>';
+}
+
+// ---------------------------------------------------------------- stories
+function storiesHTML(){
+  var dias = dosStories();
+  if (diaAberto){
+    var p = pecaPorChave(diaAberto);
+    if (p) return pecaHTML(p);
+  }
+  if (!dias.length) return topoHTML("Stories","ainda sem dias montados","") +
+    '<div class="carga">Nada aqui ainda.</div>';
+  var montados = dias.filter(function(d){ return d.laminas.some(function(l){ return l.asset; }); }).length;
+  var anel = '<div class="dias">' + dias.map(function(p){
+    var capa = p.laminas.filter(function(l){ return l.asset; })[0];
+    var cls = p.estado === "aprovado" ? "aprovado" : (capa ? "montado" : "");
+    return '<button class="dia" data-abrir="' + esc(p.chave) + '">' +
+      '<span class="anel ' + cls + '">' +
+        (capa ? '<img loading="lazy" src="' + IMG + encodeURI(capa.asset) + '" alt="">'
+              : '<span class="vazia"></span>') + '</span>' +
+      '<span style="font-size:11px;font-weight:600">' + quando(p.publicar_em) + '</span>' +
+      '<span style="font-size:9.5px;color:var(--mute);text-align:center;line-height:1.3">' +
+        (capa ? p.laminas.length + " placas" : "por montar") + '</span></button>';
+  }).join("") + '</div>';
+
+  var linhas = '<div style="display:flex;flex-direction:column;gap:10px;padding:14px 32px 30px">' +
+    dias.map(function(p){
+      var falta = p.laminas.filter(function(l){ return l.producao === "por_gravar"; }).length;
+      return '<button data-abrir="' + esc(p.chave) + '" style="display:flex;align-items:center;gap:12px;' +
+        'padding:14px;border-radius:12px;background:var(--surface);border:1px solid var(--line);width:100%">' +
+        '<span style="flex:1;min-width:0">' +
+          '<span style="display:flex;align-items:center;gap:8px;margin-bottom:5px">' +
+            '<span class="serif" style="font-size:15px">' + quando(p.publicar_em) + '</span>' + selo(p.estado) + '</span>' +
+          '<span style="display:block;font-size:12.5px;color:var(--dim);line-height:1.45">' + esc(p.titulo) + '</span>' +
+          '<span style="display:block;font-size:11px;color:var(--mute);margin-top:4px">' +
+            (falta ? '<b style="color:var(--warn)">' + falta + ' por gravar</b> · ' : "") +
+            p.laminas.length + ' placas' + (p.nota ? ' · ' + esc(p.nota) : "") + '</span>' +
+        '</span>' +
+        '<span style="color:var(--mute);transform:rotate(180deg)">' + svg(I.volta,18) + '</span></button>';
+    }).join("") + '</div>';
+
+  return topoHTML("Stories", esc(montados + " dia(s) montado(s) · " + dias.length + " no ciclo"), "") +
+    anel + '<div class="nota" style="padding:0 32px 6px">O dia mais recente fica à esquerda. ' +
+    'Dentro do dia, a sequência lê-se pela ordem em que sai.</div>' + linhas;
+}
+
+// ------------------------------------------------------------------ reels
+function reelsHTML(){
+  var rs = dosReels();
+  if (!rs.length) return topoHTML("Reels","nenhum neste ciclo","") + '<div class="carga">Nada aqui.</div>';
+  var falta = rs.filter(function(p){
+    return p.laminas.some(function(l){ return l.producao === "por_gravar"; }); }).length;
+  return topoHTML("Reels", esc(falta + " por gravar · " + rs.length + " no ciclo"), filtrosHTML(rs)) +
+    '<div class="cartoes">' + filtrar(rs).map(function(p){
+      return '<button class="cel" data-abrir="' + esc(p.chave) + '">' +
+        '<div class="arte story"><span class="badge">' + selinho(p.estado) + '</span>' +
+          (p.laminas[0] && p.laminas[0].asset
+            ? '<img loading="lazy" src="' + IMG + encodeURI(p.laminas[0].asset) + '" alt="">'
+            : '<div class="vazia"><span style="display:flex;flex-direction:column;align-items:center;gap:8px">' +
+              svg(I.camara,26) + '<span class="eyebrow">por gravar</span></span></div>') +
+        '</div>' +
+        '<div class="cap"><b>' + quando(p.publicar_em) + ' · ' + hora(p.publicar_em) + '</b>' +
+          (p.pilar ? ' · ' + esc(p.pilar.split(" · ")[0]) : "") + '</div>' +
+        '<div style="font-size:11.5px;line-height:1.45">' + esc(p.titulo) + '</div></button>';
+    }).join("") + '</div>' +
+    '<div class="aviso" style="margin:0 32px 30px">' + svg(I.texto,18) +
+    '<div>Reel não se aprova por imagem — aprova-se pelo <b>guião</b>. Abra um para ler o texto, ' +
+    'mudar uma frase, e só então aprovar.</div></div>';
+}
+
+// ------------------------------------------------------------- estrategia
+function estrategiaHTML(){
+  var e = D.ciclo.estrategia || {};
+  var partes = [];
+  (e.andares || []).forEach(function(a){
+    partes.push('<div class="bloco andar ' + (a.ativo ? "on" : "") + '">' +
+      '<div style="display:flex;align-items:baseline;justify-content:space-between;gap:8px">' +
+      '<span class="eyebrow" style="color:var(--mute)">Andar ' + esc(a.num) + ' · ' + esc(a.periodo) + '</span>' +
+      (a.ativo ? '<span class="eyebrow" style="color:var(--brandsoft)">a decorrer</span>' : "") + '</div>' +
+      '<h3>' + esc(a.nome) + '</h3>' +
+      '<div style="font-size:11.5px;color:var(--mute)">' + esc(a.pilares) + '</div></div>');
+  });
+  if (e.ritmo) partes.push('<div class="bloco"><div class="eyebrow" style="color:var(--mute);' +
+    'margin-bottom:11px">O ritmo fixo · hora do Brasil</div>' +
+    e.ritmo.map(function(r){ return '<div class="ritmo"><b>' + esc(r[0]) + '</b>' +
+      '<span style="font-size:12.5px;color:var(--dim);line-height:1.5">' + esc(r[1]) + '</span></div>'; }).join("") +
+    '</div>');
+  if (e.regras) partes.push('<div class="bloco"><div class="eyebrow" style="color:var(--mute);' +
+    'margin-bottom:11px">As regras que atravessam tudo</div>' +
+    e.regras.map(function(r){ return '<div class="regra"><span style="color:var(--brandsoft)">' +
+      svg(I.ok,14,2.2) + '</span><span>' + esc(r) + '</span></div>'; }).join("") + '</div>');
+  if (e.pilares) partes.push('<div class="bloco"><div class="eyebrow" style="color:var(--mute);' +
+    'margin-bottom:5px">Os pilares em jogo</div>' +
+    (e.fonte ? '<div style="font-size:11px;color:var(--mute);line-height:1.5;margin-bottom:12px">' +
+      esc(e.fonte) + '</div>' : "") +
+    e.pilares.map(function(p){ return '<div style="display:flex;gap:11px;align-items:baseline;padding:4px 0">' +
+      '<span class="serif" style="width:26px;flex:none;font-size:15px;color:var(--brand)">' + esc(p[0]) + '</span>' +
+      '<span style="flex:1;font-size:12.5px;line-height:1.45">' + esc(p[1]) + '</span>' +
+      '<span style="font-size:10px;color:var(--mute)">' + esc(p[2]) + '</span></div>'; }).join("") + '</div>');
+  if (e.nota) partes.push('<div class="aviso">' + svg(I.relogio,16) + '<div>' + esc(e.nota) + '</div></div>');
+  if (!partes.length) partes.push('<div class="carga">A estratégia deste ciclo ainda não foi escrita.</div>');
+  return topoHTML("A estratégia", esc(D.ciclo.titulo + " · o porquê de cada peça"), "") +
+    '<div class="est">' + partes.join("") + '</div>';
+}
+
+// ---------------------------------------------------------------- concluido
+function fimHTML(){
+  var pr = D.progresso;
+  return '<div class="fim naoimprime">' +
+    '<div class="circ">' + svg(I.ok,26,2.4) + '</div>' +
+    '<div class="serif" style="font-size:24px;line-height:1.2">Está tudo decidido.</div>' +
+    '<div style="font-size:12.5px;line-height:1.65;color:var(--dim)">' +
+      pr.aprovadas + ' peças como estavam, ' + pr.com_alteracao + ' com alterações suas. ' +
+      'Não precisa de fazer mais nada.</div>' +
+    '<button class="bt forte" data-imprimir="1" style="max-width:280px;margin-top:6px">' +
+      svg(I.baixar,18) + 'Guardar o PDF</button>' +
+    '<div class="nota">Abre a folha de impressão do telemóvel ou do computador — escolha «Guardar como PDF».</div>' +
+  '</div>';
+}
+
+function impressaoHTML(){
+  return '<div class="imp" style="display:none">' + D.pecas.map(function(p){
+    var l = p.laminas.filter(function(x){ return x.asset; })[0];
+    return '<div class="p">' +
+      (l ? '<img src="' + IMG + encodeURI(l.asset) + '" alt="">' : "") +
+      '<div><div style="font-weight:700">' + esc(p.titulo) + '</div>' +
+      '<div style="font-size:11px;margin:4px 0 8px">' + quando(p.publicar_em) + ' · ' + hora(p.publicar_em) +
+        ' · ' + esc(tipoRotulo(p)) + ' · ' + esc(ROTULO[p.estado]) +
+        (p.decidido_por ? ' por ' + esc(p.decidido_por) : "") + '</div>' +
+      (p.legenda ? '<div class="legenda">' + esc(p.legenda.texto) + '</div>' : "") +
+      (p.comentarios.length ? '<div style="font-size:11px;margin-top:8px"><b>Pedidos:</b> ' +
+        p.comentarios.map(function(c){ return esc(c.texto); }).join(" / ") + '</div>' : "") +
+      '</div></div>';
+  }).join("") + '</div>';
+}
+
+// ------------------------------------------------------------------ montar
+function desenhar(){
+  var raiz = document.getElementById("raiz");
+  if (!D){ raiz.innerHTML = '<div class="carga">A abrir a sala…</div>'; return; }
+
+  var meio;
+  if (aberta){
+    var p = pecaPorChave(aberta);
+    meio = p ? pecaHTML(p) : '<div class="carga">Peça não encontrada.</div>';
+  } else if (aba === "feed"){
+    meio = feedHTML();
+    if (D.progresso.pendentes === 0 && D.progresso.total > 0) meio = fimHTML() + meio;
+  } else if (aba === "stories"){ meio = storiesHTML(); }
+  else if (aba === "reels"){ meio = reelsHTML(); }
+  else { meio = estrategiaHTML(); }
+
+  var erroHTML = erroMsg ? '<div class="aviso-erro">' + esc(erroMsg) + '</div>' : "";
+  var carregando = ocupado ? '<div class="carga naoimprime" style="padding:10px">a guardar…</div>' : "";
+
+  raiz.innerHTML = '<div class="sala">' + ladoHTML() +
+    '<main class="corpo">' + erroHTML + carregando + meio + '</main></div>' +
+    tabsHTML() + impressaoHTML();
+
+  if (editando){
+    var cx = document.getElementById("cx-legenda");
+    if (cx){ cx.focus(); cx.addEventListener("input", function(){ rascunho = cx.value; }); }
+  }
+}
+
+// ------------------------------------------------------------------ eventos
+document.addEventListener("click", function(ev){
+  var alvo = ev.target.closest ? ev.target.closest("[data-aba],[data-abrir],[data-vista],[data-filtro]," +
+    "[data-lamina],[data-voltar],[data-estado],[data-comentar],[data-editar],[data-cancelar]," +
+    "[data-guardar-legenda],[data-imprimir]") : null;
+  if (!alvo) return;
+  var d = alvo.dataset;
+
+  if (d.aba){ aba = d.aba; aberta = null; diaAberto = null; laminaSel = null; editando = false; filtro = "todas"; desenhar(); }
+  else if (d.abrir){
+    var p = pecaPorChave(d.abrir);
+    aberta = d.abrir; laminaSel = null; editando = false;
+    if (p && p.tipo === "stories") diaAberto = d.abrir;
+    window.scrollTo(0,0); desenhar();
+  }
+  else if (d.vista){ vista = d.vista; desenhar(); }
+  else if (d.filtro){ filtro = d.filtro; desenhar(); }
+  else if (d.lamina){ laminaSel = Number(d.lamina); desenhar(); }
+  else if (d.voltar){ aberta = null; diaAberto = null; laminaSel = null; editando = false; desenhar(); }
+  else if (d.estado){ enviar(d.chave, "estado", { estado: d.estado }); }
+  else if (d.comentar){
+    var cx = document.getElementById("cx-com");
+    var texto = cx ? cx.value.trim() : "";
+    if (!texto){ if (cx) cx.focus(); return; }
+    enviar(d.comentar, "comentario", { texto: texto, lamina: laminaSel });
+  }
+  else if (d.editar){
+    var pp = pecaPorChave(aberta);
+    rascunho = pp && pp.legenda ? pp.legenda.texto : "";
+    editando = true; desenhar();
+  }
+  else if (d.cancelar){ editando = false; desenhar(); }
+  else if (d.guardarLegenda){
+    var cxl = document.getElementById("cx-legenda");
+    var t = cxl ? cxl.value.trim() : rascunho.trim();
+    if (!t) return;
+    editando = false;
+    enviar(d.guardarLegenda, "legenda", { texto: t });
+  }
+  else if (d.imprimir){
+    document.querySelector(".imp").style.display = "block";
+    window.print();
+    setTimeout(function(){ document.querySelector(".imp").style.display = "none"; }, 500);
+  }
+});
+
+puxar().catch(function(e){
+  document.getElementById("raiz").innerHTML =
+    '<div class="aviso-erro" style="margin:32px">Não consegui abrir esta sala. ' +
+    'Verifique a ligação e recarregue a página.</div>';
+});
+})();
+</script>
+</body>
+</html>
