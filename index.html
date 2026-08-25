@@ -166,6 +166,16 @@ a.bt{text-decoration:none}
   align-items:center;justify-content:center;color:var(--warn)}
 .cartoes{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:16px;padding:22px 32px 34px}
 
+/* semanas (a entrada da sala) */
+.semanas{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:18px;padding:24px 32px 40px;max-width:900px}
+.semana{display:flex;flex-direction:column;gap:12px;padding:20px 22px;border-radius:14px;
+  background:var(--surface);border:1px solid var(--line);width:100%;text-align:left;
+  transition:border-color .15s}
+.semana:hover{border-color:var(--brandsoft)}
+.semana h3{font-family:Georgia,serif;font-size:20px;line-height:1.25;font-weight:400}
+.semana .contas{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--dim)}
+.semana .contas span{display:flex;align-items:center;gap:6px}
+
 /* estrategia */
 .est{display:flex;flex-direction:column;gap:12px;padding:22px 32px 40px;max-width:780px}
 .est .bloco{padding:16px 18px;border-radius:12px;background:var(--surface);border:1px solid var(--line)}
@@ -192,6 +202,7 @@ a.bt{text-decoration:none}
 /* --------------------------------------------------------------- telemovel */
 @media (max-width:899px){
   .sala{display:block;min-height:100vh;padding-bottom:78px}
+  .semanas{grid-template-columns:1fr;gap:12px;padding:14px}
   .lado{width:auto;height:auto;position:static;border-right:none;border-bottom:1px solid var(--line);
     padding:16px 14px;gap:14px}
   .lado .nav{display:none}
@@ -238,18 +249,13 @@ a.bt{text-decoration:none}
 <script>
 (function(){
 "use strict";
-var SLUG = new URLSearchParams(location.search).get("c") || "";
-if (!SLUG){
-  document.addEventListener("DOMContentLoaded", function(){
-    document.getElementById("raiz").innerHTML =
-      '<div class="carga">Este link está incompleto. Peça o link certo a quem lhe enviou.</div>';
-  });
-}
+var SLUG = new URLSearchParams(location.search).get("c") || "teneci-set26-4b7c1e9a3f52";
 var API = "https://fpsqphfgxhrwsxtrbqnk.supabase.co/functions/v1/sala/api/" + encodeURIComponent(SLUG);
 var IMG = "https://fpsqphfgxhrwsxtrbqnk.supabase.co/functions/v1/sala/a/";
 var ZIP = "https://fpsqphfgxhrwsxtrbqnk.supabase.co/functions/v1/sala/z/" + encodeURIComponent(SLUG) + "/";
 
 var D = null;
+var semanaSel = null;                       // inicio (yyyy-mm-dd) da semana aberta; null = entrada
 var aba = "feed", vista = "grelha", filtro = "todas";
 var aberta = null, laminaSel = null, diaAberto = null;
 var editando = false, rascunho = "", ocupado = false, erroMsg = "";
@@ -312,9 +318,20 @@ function pecaPorChave(c){
   for (var i=0;i<D.pecas.length;i++) if (D.pecas[i].chave === c) return D.pecas[i];
   return null;
 }
-function doFeed(){ return D.pecas.filter(function(p){ return p.tipo === "post" || p.tipo === "carrossel"; }); }
-function dosReels(){ return D.pecas.filter(function(p){ return p.tipo === "reel"; }); }
-function dosStories(){ return D.pecas.filter(function(p){ return p.tipo === "stories"; }); }
+function semanaAtual(){
+  for (var i=0;i<D.semanas.length;i++) if (D.semanas[i].inicio === semanaSel) return D.semanas[i];
+  return null;
+}
+function diaMes(iso){ var p = iso.split("-"); return p[2] + "/" + p[1]; }
+function faixaSemana(s){ return diaMes(s.inicio) + " – " + diaMes(s.fim); }
+function rotuloSemana(s){ return s.titulo || ("Semana de " + faixaSemana(s)); }
+function daSemana(){
+  if (!semanaSel) return D.pecas;
+  return D.pecas.filter(function(p){ return p.semana === semanaSel; });
+}
+function doFeed(){ return daSemana().filter(function(p){ return p.tipo === "post" || p.tipo === "carrossel"; }); }
+function dosReels(){ return daSemana().filter(function(p){ return p.tipo === "reel"; }); }
+function dosStories(){ return daSemana().filter(function(p){ return p.tipo === "stories"; }); }
 
 function arte(lam, classe){
   var c = "arte " + (classe || "");
@@ -361,12 +378,29 @@ function ladoHTML(){
   var feitas = pr.total - pr.pendentes;
   var pct = pr.total ? Math.round(100*feitas/pr.total) : 0;
   var inicial = (c.nome || "?").trim().charAt(0).toUpperCase();
-  var navs = [["feed",I.feed,"Feed"],["stories",I.story,"Stories"],
-              ["reels",I.reel,"Reels"],["estrategia",I.doc,"Estratégia"]];
-  var nav = navs.map(function(n){
-    return '<button data-aba="' + n[0] + '" class="' + (aba===n[0]?"on":"") + '">' +
-           svg(n[1],20) + '<span>' + esc(n[2]) + '</span></button>';
-  }).join("");
+  var nav;
+  if (semanaSel){
+    var s = semanaAtual();
+    var navs = [["feed",I.feed,"Feed"],["stories",I.story,"Stories"],
+                ["reels",I.reel,"Reels"],["estrategia",I.doc,"Estratégia"]];
+    nav = '<button data-semanas="1" style="display:flex;align-items:center;gap:12px;min-height:46px;' +
+          'padding:0 14px;border-radius:10px;color:var(--mute);font-size:14px;font-weight:500;width:100%">' +
+          svg(I.volta,18) + '<span>Todas as semanas</span></button>' +
+      '<div style="padding:10px 14px 4px"><div class="eyebrow" style="color:var(--mute)">' +
+        esc(faixaSemana(s)) + '</div>' +
+        '<div class="serif" style="font-size:14px;line-height:1.35;margin-top:4px">' +
+        esc(rotuloSemana(s)) + '</div></div>' +
+      navs.map(function(n){
+        return '<button data-aba="' + n[0] + '" class="' + (aba===n[0]?"on":"") + '">' +
+               svg(n[1],20) + '<span>' + esc(n[2]) + '</span></button>';
+      }).join("");
+  } else {
+    nav = D.semanas.map(function(s){
+      return '<button data-semana="' + esc(s.inicio) + '">' + svg(I.feed,20) +
+        '<span style="min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">' +
+        esc(rotuloSemana(s)) + '</span></button>';
+    }).join("");
+  }
   return '<aside class="lado">' +
     '<div class="perfil"><div class="av">' + esc(inicial) + '</div><div style="min-width:0">' +
       '<div style="font-size:14px;font-weight:600">' + esc(c.arroba || c.nome) + '</div>' +
@@ -392,9 +426,12 @@ function ladoHTML(){
 }
 
 function tabsHTML(){
+  if (!semanaSel) return "";
   var navs = [["feed",I.feed,"Feed"],["stories",I.story,"Stories"],
               ["reels",I.reel,"Reels"],["estrategia",I.doc,"Estratégia"]];
-  return '<nav class="tabs naoimprime">' + navs.map(function(n){
+  return '<nav class="tabs naoimprime">' +
+    '<button data-semanas="1">' + svg(I.volta,21) + '<span>Semanas</span><span class="risco"></span></button>' +
+    navs.map(function(n){
     return '<button data-aba="' + n[0] + '" class="' + (aba===n[0]?"on":"") + '">' + svg(n[1],21) +
            '<span>' + esc(n[2]) + '</span><span class="risco"></span></button>';
   }).join("") + '</nav>';
@@ -432,6 +469,36 @@ function filtrar(pecas){
   return pecas.filter(function(p){ return p.estado === filtro; });
 }
 
+// ------------------------------------------------- a entrada: as semanas
+function semanasHTML(){
+  var cartoes = D.semanas.map(function(s){
+    var feitas = s.total - s.pendentes;
+    var pct = s.total ? Math.round(100*feitas/s.total) : 0;
+    var estado = s.pendentes === 0
+      ? '<span class="selo aprovado">' + svg(I.ok,13,2.2) + 'Tudo decidido</span>'
+      : '<span class="selo pendente">' + svg(I.relogio,13,2.2) + s.pendentes + ' por decidir</span>';
+    return '<button class="semana" data-semana="' + esc(s.inicio) + '">' +
+      '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px">' +
+        '<span class="eyebrow" style="color:var(--brandsoft)">' + esc(faixaSemana(s)) + '</span>' + estado +
+      '</div>' +
+      '<h3>' + esc(rotuloSemana(s)) + '</h3>' +
+      '<div class="contas">' +
+        '<span><b style="color:var(--ink)">' + s.total + '</b>&nbsp;peças</span>' +
+        (s.aprovadas ? '<span><span class="ponto" style="background:var(--ok)"></span>' + s.aprovadas + ' aprovadas</span>' : "") +
+        (s.com_alteracao ? '<span><span class="ponto" style="background:var(--warn)"></span>' + s.com_alteracao + ' com alteração</span>' : "") +
+      '</div>' +
+      '<div class="barra"><i style="width:' + pct + '%"></i></div>' +
+      (s.nota ? '<div class="nota">' + esc(s.nota) + '</div>' : "") +
+      '<div style="display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--brandsoft);font-weight:600">' +
+        'Entrar na semana <span style="transform:rotate(180deg);display:inline-flex">' + svg(I.volta,15) + '</span></div>' +
+    '</button>';
+  }).join("");
+  var corpo = D.semanas.length
+    ? '<div class="semanas">' + cartoes + '</div>'
+    : '<div class="carga">Ainda não há semanas no ar.</div>';
+  return topoHTML("As semanas", esc(D.ciclo.titulo), "") + corpo;
+}
+
 // ------------------------------------------------------------------- feed
 function feedHTML(){
   var todas = doFeed();
@@ -448,7 +515,8 @@ function feedHTML(){
        '<span class="eyebrow col-legenda">Legenda</span>','<span class="eyebrow">Estado</span>'].join("") +
       '</div>' + pecas.map(linhaHTML).join("");
   }
-  return topoHTML("Feed", esc(todas.length + " posts · " + D.ciclo.titulo.toLowerCase()),
+  var s = semanaAtual();
+  return topoHTML("Feed", esc(todas.length + " posts · " + (s ? rotuloSemana(s) : D.ciclo.titulo)),
                   filtrosHTML(todas) + vistasHTML()) + corpo;
 }
 
@@ -664,7 +732,7 @@ function storiesHTML(){
         '<span style="color:var(--mute);transform:rotate(180deg)">' + svg(I.volta,18) + '</span></button>';
     }).join("") + '</div>';
 
-  return topoHTML("Stories", esc(montados + " dia(s) montado(s) · " + dias.length + " no ciclo"), "") +
+  return topoHTML("Stories", esc(montados + " dia(s) montado(s) · " + dias.length + " nesta semana"), "") +
     anel + '<div class="nota" style="padding:0 32px 6px">O dia mais recente fica à esquerda. ' +
     'Dentro do dia, a sequência lê-se pela ordem em que sai.</div>' + linhas;
 }
@@ -672,10 +740,10 @@ function storiesHTML(){
 // ------------------------------------------------------------------ reels
 function reelsHTML(){
   var rs = dosReels();
-  if (!rs.length) return topoHTML("Reels","nenhum neste ciclo","") + '<div class="carga">Nada aqui.</div>';
+  if (!rs.length) return topoHTML("Reels","nenhum nesta semana","") + '<div class="carga">Nada aqui.</div>';
   var falta = rs.filter(function(p){
     return p.laminas.some(function(l){ return l.producao === "por_gravar"; }); }).length;
-  return topoHTML("Reels", esc(falta + " por gravar · " + rs.length + " no ciclo"), filtrosHTML(rs)) +
+  return topoHTML("Reels", esc(falta + " por gravar · " + rs.length + " nesta semana"), filtrosHTML(rs)) +
     '<div class="cartoes">' + filtrar(rs).map(function(p){
       return '<button class="cel" data-abrir="' + esc(p.chave) + '">' +
         '<div class="arte story"><span class="badge">' + selinho(p.estado) + '</span>' +
@@ -694,19 +762,23 @@ function reelsHTML(){
 }
 
 // ------------------------------------------------------------- estrategia
+// A estratégia mostrada é SEMPRE a da semana aberta. A estratégia do mês
+// inteiro é conversada na call mensal e não passa por aqui.
 function estrategiaHTML(){
-  var e = D.ciclo.estrategia || {};
+  var s = semanaAtual();
+  var e = (s && s.estrategia) || {};
   var partes = [];
-  (e.andares || []).forEach(function(a){
-    partes.push('<div class="bloco andar ' + (a.ativo ? "on" : "") + '">' +
-      '<div style="display:flex;align-items:baseline;justify-content:space-between;gap:8px">' +
-      '<span class="eyebrow" style="color:var(--mute)">Andar ' + esc(a.num) + ' · ' + esc(a.periodo) + '</span>' +
-      (a.ativo ? '<span class="eyebrow" style="color:var(--brandsoft)">a decorrer</span>' : "") + '</div>' +
-      '<h3>' + esc(a.nome) + '</h3>' +
-      '<div style="font-size:11.5px;color:var(--mute)">' + esc(a.pilares) + '</div></div>');
-  });
+  if (e.foco) partes.push('<div class="bloco andar on">' +
+    '<div class="eyebrow" style="color:var(--mute)">O foco da semana</div>' +
+    '<h3>' + esc(s.titulo || "Esta semana") + '</h3>' +
+    '<div style="font-size:13px;color:var(--dim);line-height:1.65">' + esc(e.foco) + '</div></div>');
+  if (e.pilares) partes.push('<div class="bloco"><div class="eyebrow" style="color:var(--mute);' +
+    'margin-bottom:11px">Os pilares desta semana</div>' +
+    e.pilares.map(function(p){ return '<div style="display:flex;gap:11px;align-items:baseline;padding:4px 0">' +
+      '<span class="serif" style="width:26px;flex:none;font-size:15px;color:var(--brand)">' + esc(p[0]) + '</span>' +
+      '<span style="flex:1;font-size:12.5px;line-height:1.45">' + esc(p[1]) + '</span></div>'; }).join("") + '</div>');
   if (e.ritmo) partes.push('<div class="bloco"><div class="eyebrow" style="color:var(--mute);' +
-    'margin-bottom:11px">O ritmo fixo · hora do Brasil</div>' +
+    'margin-bottom:11px">O ritmo da semana · hora do Brasil</div>' +
     e.ritmo.map(function(r){ return '<div class="ritmo"><b>' + esc(r[0]) + '</b>' +
       '<span style="font-size:12.5px;color:var(--dim);line-height:1.5">' + esc(r[1]) + '</span></div>'; }).join("") +
     '</div>');
@@ -714,17 +786,10 @@ function estrategiaHTML(){
     'margin-bottom:11px">As regras que atravessam tudo</div>' +
     e.regras.map(function(r){ return '<div class="regra"><span style="color:var(--brandsoft)">' +
       svg(I.ok,14,2.2) + '</span><span>' + esc(r) + '</span></div>'; }).join("") + '</div>');
-  if (e.pilares) partes.push('<div class="bloco"><div class="eyebrow" style="color:var(--mute);' +
-    'margin-bottom:5px">Os pilares em jogo</div>' +
-    (e.fonte ? '<div style="font-size:11px;color:var(--mute);line-height:1.5;margin-bottom:12px">' +
-      esc(e.fonte) + '</div>' : "") +
-    e.pilares.map(function(p){ return '<div style="display:flex;gap:11px;align-items:baseline;padding:4px 0">' +
-      '<span class="serif" style="width:26px;flex:none;font-size:15px;color:var(--brand)">' + esc(p[0]) + '</span>' +
-      '<span style="flex:1;font-size:12.5px;line-height:1.45">' + esc(p[1]) + '</span>' +
-      '<span style="font-size:10px;color:var(--mute)">' + esc(p[2]) + '</span></div>'; }).join("") + '</div>');
   if (e.nota) partes.push('<div class="aviso">' + svg(I.relogio,16) + '<div>' + esc(e.nota) + '</div></div>');
-  if (!partes.length) partes.push('<div class="carga">A estratégia deste ciclo ainda não foi escrita.</div>');
-  return topoHTML("A estratégia", esc(D.ciclo.titulo + " · o porquê de cada peça"), "") +
+  if (!partes.length) partes.push('<div class="carga">A estratégia desta semana ainda não foi escrita.</div>');
+  return topoHTML("A estratégia da semana",
+      esc((s ? faixaSemana(s) : "") + " · o porquê de cada peça"), "") +
     '<div class="est">' + partes.join("") + '</div>';
 }
 
@@ -768,10 +833,11 @@ function desenhar(){
   if (aberta){
     var p = pecaPorChave(aberta);
     meio = p ? pecaHTML(p) : '<div class="carga">Peça não encontrada.</div>';
-  } else if (aba === "feed"){
-    meio = feedHTML();
+  } else if (!semanaSel){
+    meio = semanasHTML();
     if (D.progresso.pendentes === 0 && D.progresso.total > 0) meio = fimHTML() + meio;
-  } else if (aba === "stories"){ meio = storiesHTML(); }
+  } else if (aba === "feed"){ meio = feedHTML(); }
+  else if (aba === "stories"){ meio = storiesHTML(); }
   else if (aba === "reels"){ meio = reelsHTML(); }
   else { meio = estrategiaHTML(); }
 
@@ -792,11 +858,15 @@ function desenhar(){
 document.addEventListener("click", function(ev){
   var alvo = ev.target.closest ? ev.target.closest("[data-aba],[data-abrir],[data-vista],[data-filtro]," +
     "[data-lamina],[data-voltar],[data-estado],[data-comentar],[data-editar],[data-cancelar]," +
-    "[data-guardar-legenda],[data-imprimir]") : null;
+    "[data-guardar-legenda],[data-imprimir],[data-semana],[data-semanas]") : null;
   if (!alvo) return;
   var d = alvo.dataset;
 
-  if (d.aba){ aba = d.aba; aberta = null; diaAberto = null; laminaSel = null; editando = false; filtro = "todas"; desenhar(); }
+  if (d.semana){ semanaSel = d.semana; aba = "feed"; aberta = null; diaAberto = null;
+    laminaSel = null; editando = false; filtro = "todas"; window.scrollTo(0,0); desenhar(); }
+  else if (d.semanas){ semanaSel = null; aberta = null; diaAberto = null; laminaSel = null;
+    editando = false; filtro = "todas"; window.scrollTo(0,0); desenhar(); }
+  else if (d.aba){ aba = d.aba; aberta = null; diaAberto = null; laminaSel = null; editando = false; filtro = "todas"; desenhar(); }
   else if (d.abrir){
     var p = pecaPorChave(d.abrir);
     aberta = d.abrir; laminaSel = null; editando = false;
