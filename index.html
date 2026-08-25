@@ -615,7 +615,9 @@ function baixarHTML(p, lam){
     var nomeDl = "IG_" + p.tipo + "_" + lam.indice + "_" + dia + ".webp";
     partes.push('<a class="bt linha" href="' + IMG + encodeURI(lam.asset) +
       '" download="' + esc(nomeDl) + '">' + svg(I.baixar,17) +
-      (p.laminas.length > 1 ? 'Baixar esta lâmina' : 'Baixar a arte') + '</a>');
+      (p.laminas.length > 1
+        ? (p.tipo === "stories" ? 'Baixar esta placa' : 'Baixar esta lâmina')
+        : 'Baixar a arte') + '</a>');
   }
   var rot = prontas.length
     ? 'Baixar o pacote · ' + prontas.length + (prontas.length > 1 ? ' artes' : ' arte') + ' + copy'
@@ -668,10 +670,14 @@ function pecaHTML(p){
       '</span><span class="n">' + l.indice + '</span></button>';
   }).join("") + '</div>' : "";
 
+  var palavra = p.tipo === "stories" ? "placa" : "lâmina";
+  var Palavra = p.tipo === "stories" ? "Placa" : "Lâmina";
+
   var guiao = lam && lam.guiao
     ? '<div class="painel" style="border-left:3px solid var(--warn)">' +
-      '<div class="eyebrow" style="color:var(--warn);margin-bottom:8px">Lâmina ' + lam.indice +
-      ' · o que você fala</div>' +
+      '<div class="eyebrow" style="color:var(--warn);margin-bottom:8px">' +
+      (p.tipo === "reel" ? "O que você fala neste vídeo"
+                         : Palavra + ' ' + lam.indice + ' · o que você fala') + '</div>' +
       '<div class="serif" style="font-size:14px;line-height:1.75">' + esc(lam.guiao) + '</div></div>'
     : "";
 
@@ -700,7 +706,7 @@ function pecaHTML(p){
 
   var centro = '<div class="centro">' + slide + tira +
     (p.laminas.length > 1
-      ? '<div class="conta-lam naoimprime">' + (story ? "Placa " : "Lâmina ") + idx +
+      ? '<div class="conta-lam naoimprime">' + Palavra + ' ' + idx +
         ' de ' + p.laminas.length + ' · passe com as setas · o comentário vai só para esta</div>' : "") +
     guiao + legenda + '</div>';
 
@@ -708,7 +714,7 @@ function pecaHTML(p){
     return '<div class="com ' + (c.autor_tipo === "agencia" ? "agencia" : "") + '">' +
       '<div class="a">' + esc((c.autor||"?").charAt(0).toUpperCase()) + '</div>' +
       '<div style="flex:1;min-width:0"><div class="quem"><b>' + esc(c.autor) + '</b> · ' +
-        quando(c.criado_em) + (c.lamina ? ' · lâmina ' + c.lamina : "") + '</div>' +
+        quando(c.criado_em) + (c.lamina ? ' · ' + palavra + ' ' + c.lamina : "") + '</div>' +
         '<div class="t">' + esc(c.texto) + '</div></div></div>';
   }).join("") || '<div class="nota">Ainda sem comentários nesta peça.</div>';
 
@@ -737,10 +743,10 @@ function pecaHTML(p){
       '<div class="nota" style="margin-top:9px">' + ajuda + '</div></section>' +
     '<section><div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:9px">' +
       '<span class="eyebrow" style="color:var(--mute)">Comentários</span>' +
-      (laminaSel ? '<span style="font-size:11px;color:var(--mute)">lâmina ' + laminaSel + '</span>' : "") +
+      (laminaSel ? '<span style="font-size:11px;color:var(--mute)">' + palavra + ' ' + laminaSel + '</span>' : "") +
       '</div>' +
       '<textarea id="cx-com" placeholder="' +
-      (laminaSel ? "O que quer mudar na lâmina " + laminaSel + "?" : "O que quer mudar nesta peça?") +
+      (laminaSel ? "O que quer mudar na " + palavra + " " + laminaSel + "?" : "O que quer mudar nesta peça?") +
       '"></textarea>' +
       '<div style="margin-top:10px"><button class="bt forte" data-comentar="' + esc(p.chave) +
         '">Guardar comentário</button></div>' +
