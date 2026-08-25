@@ -100,17 +100,18 @@ a{color:var(--brandsoft)}
   box-shadow:0 20px 44px rgba(0,0,0,.38)}
 .slide.story{aspect-ratio:9/16;max-width:300px}
 .slide img{width:100%;height:100%;object-fit:cover}
-/* passar lâmina: uma seta de cada lado, por cima das bordas da arte */
-.palco{position:relative;width:100%;max-width:420px;display:flex;justify-content:center;
-  touch-action:pan-y}
-.palco.story{max-width:300px}
+/* passar lâmina: uma seta de cada lado, FORA da arte — nunca por cima do texto.
+   No computador vivem nas margens; no telemóvel não há margem, descem para baixo. */
+.palco{position:relative;width:100%;max-width:532px;display:flex;justify-content:center;
+  padding:0 56px;touch-action:pan-y}
+.palco.story{max-width:412px}
 .seta{position:absolute;top:50%;transform:translateY(-50%);width:44px;height:44px;
   border-radius:999px;background:rgba(26,23,32,.72);border:1px solid rgba(246,241,232,.18);
   color:var(--ink);display:flex;align-items:center;justify-content:center;z-index:3;
   -webkit-backdrop-filter:blur(6px);backdrop-filter:blur(6px);transition:background .15s}
 .seta:hover{background:rgba(26,23,32,.92)}
-.seta.esq{left:8px}
-.seta.dir{right:8px}
+.seta.esq{left:0}
+.seta.dir{right:0}
 .seta:disabled{opacity:.28;cursor:default}
 .conta-lam{font-size:11.5px;color:var(--mute);line-height:1.55;text-align:center}
 .tira{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
@@ -232,6 +233,11 @@ a.bt{text-decoration:none}
   .linha .col-formato,.cabl .col-formato,.linha .col-legenda,.cabl .col-legenda{display:none}
   .peca{flex-direction:column}
   .centro{padding:16px 14px 20px}
+  /* sem margem lateral no telemóvel: as setas passam para baixo da arte */
+  .palco{max-width:420px;padding:0;flex-wrap:wrap;gap:14px;align-items:center}
+  .palco.story{max-width:300px}
+  .palco>.slide{flex:0 0 100%}
+  .seta{position:static;transform:none}
   .rail{width:auto;border-left:none;border-top:1px solid var(--line)}
   .dias,.placas,.est{padding-left:14px;padding-right:14px}
   .tabs{display:flex;position:fixed;left:0;right:0;bottom:0;background:var(--surface);
@@ -676,8 +682,9 @@ function pecaHTML(p){
   var guiao = lam && lam.guiao
     ? '<div class="painel" style="border-left:3px solid var(--warn)">' +
       '<div class="eyebrow" style="color:var(--warn);margin-bottom:8px">' +
-      (p.tipo === "reel" ? "O que você fala neste vídeo"
-                         : Palavra + ' ' + lam.indice + ' · o que você fala') + '</div>' +
+      (lam.producao === "por_desenhar" ? "A fotografia que entra aqui"
+       : p.tipo === "reel" ? "O que você fala neste vídeo"
+                           : Palavra + ' ' + lam.indice + ' · o que você fala') + '</div>' +
       '<div class="serif" style="font-size:14px;line-height:1.75">' + esc(lam.guiao) + '</div></div>'
     : "";
 
@@ -913,8 +920,10 @@ function impPecaHTML(p){
       : '<div class="semarte' + (story ? " story" : "") + '">' +
         (l.producao === "por_gravar" ? "vídeo<br>por gravar" : "por<br>desenhar") + '</div>';
     var copy = "";
-    if (l.producao === "por_gravar" && l.guiao){
-      copy = '<div class="gravar">O que você fala neste vídeo</div>' +
+    if (l.guiao && (l.producao === "por_gravar" || l.producao === "por_desenhar")){
+      copy = '<div class="gravar">' +
+             (l.producao === "por_desenhar" ? "A fotografia que entra aqui"
+                                            : "O que você fala neste vídeo") + '</div>' +
              '<div class="guiao-imp">' + esc(l.guiao) + '</div>';
     }
     return '<div class="fila">' +
