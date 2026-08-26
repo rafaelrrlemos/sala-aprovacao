@@ -1,6 +1,8 @@
 import {Composition} from 'remotion';
 import {Reel, reelSchema} from './Reel';
 import {CanonTours} from './canon/CanonTours';
+import {BandaDesenhada} from './estilos/BandaDesenhada';
+import {EstiloLottie} from './estilos/Lottie';
 
 export const RemotionRoot: React.FC = () => {
   return (
@@ -10,6 +12,23 @@ export const RemotionRoot: React.FC = () => {
         id="CanonToursTikTok"
         component={CanonTours}
         durationInFrames={810}
+        fps={30}
+        width={1080}
+        height={1920}
+      />
+      {/* Testes de estilo: ver src/estilos/. */}
+      <Composition
+        id="BandaDesenhada"
+        component={BandaDesenhada}
+        durationInFrames={240}
+        fps={30}
+        width={1080}
+        height={1920}
+      />
+      <Composition
+        id="EstiloLottie"
+        component={EstiloLottie}
+        durationInFrames={180}
         fps={30}
         width={1080}
         height={1920}

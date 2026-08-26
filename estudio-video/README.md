@@ -28,6 +28,8 @@ Nao e preciso FFmpeg no sistema: vem um compilado dentro de `@remotion/composito
 | Id | Formato | Duracao | O que e |
 | --- | --- | --- | --- |
 | `CanonToursTikTok` | 1080x1920, 30 fps | 27 s | Canon Tours, campanha D30 -> D01 |
+| `BandaDesenhada` | 1080x1920, 30 fps | 8 s | Teste de estilo: vinhetas desenhadas por codigo |
+| `EstiloLottie` | 1080x1920, 30 fps | 6 s | Teste de estilo: ficheiro Lottie tocado no video |
 | `Reel` | 1080x1920, 30 fps | 9 s | Teste tecnico; texto todo por props |
 
 ## Canon Tours (`src/canon/`)
@@ -60,6 +62,21 @@ Copy das cenas 2, 3 e 4 vem do anexo D30 do documento de story routing.
    puro. Entrando fotos, elas passam a fundo das cenas e o texto fica onde esta.
 
 Fontes empacotadas em `public/fontes/` a partir do `@fontsource` (SIL Open Font License).
+
+## Testes de estilo (`src/estilos/`)
+
+Duas maneiras diferentes de meter desenho num video, para comparar:
+
+- **`BandaDesenhada.tsx`** — tudo SVG escrito a mao: carrinha, caras, baloes,
+  linhas de velocidade, trama de pontos, vinhetas que entram aos saltos e uma
+  ultima que rebenta a grelha. Nao ha imagem nenhuma no projeto; se mudar o
+  `fps`, o desenho continua correto. Bom para vetor plano e contorno grosso —
+  mau para ilustracao detalhada ou expressao facial a serio.
+- **`Lottie.tsx` + `marca-lottie.json`** — um ficheiro Lottie tocado dentro da
+  composicao com `@remotion/lottie`. Este foi escrito a mao (trim paths,
+  rotacao, saltos), mas o mesmo codigo toca qualquer JSON exportado do After
+  Effects ou tirado do LottieFiles. O Remotion trata da folha, do texto e do
+  compasso; o desenho vem do asset.
 
 ## Licenca do Remotion
 
