@@ -3,6 +3,7 @@ import {Reel, reelSchema} from './Reel';
 import {CanonTours} from './canon/CanonTours';
 import {BandaDesenhada} from './estilos/BandaDesenhada';
 import {EstiloLottie} from './estilos/Lottie';
+import {Serigrafia} from './estilos/Serigrafia';
 
 export const RemotionRoot: React.FC = () => {
   return (
@@ -29,6 +30,14 @@ export const RemotionRoot: React.FC = () => {
         id="EstiloLottie"
         component={EstiloLottie}
         durationInFrames={180}
+        fps={30}
+        width={1080}
+        height={1920}
+      />
+      <Composition
+        id="Serigrafia"
+        component={Serigrafia}
+        durationInFrames={210}
         fps={30}
         width={1080}
         height={1920}

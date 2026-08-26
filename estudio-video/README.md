@@ -30,6 +30,7 @@ Nao e preciso FFmpeg no sistema: vem um compilado dentro de `@remotion/composito
 | `CanonToursTikTok` | 1080x1920, 30 fps | 27 s | Canon Tours, campanha D30 -> D01 |
 | `BandaDesenhada` | 1080x1920, 30 fps | 8 s | Teste de estilo: vinhetas desenhadas por codigo |
 | `EstiloLottie` | 1080x1920, 30 fps | 6 s | Teste de estilo: ficheiro Lottie tocado no video |
+| `Serigrafia` | 1080x1920, 30 fps | 7 s | Teste de estilo: tipo serigrafado sobre papel kraft |
 | `Reel` | 1080x1920, 30 fps | 9 s | Teste tecnico; texto todo por props |
 
 ## Canon Tours (`src/canon/`)
@@ -77,6 +78,18 @@ Duas maneiras diferentes de meter desenho num video, para comparar:
   rotacao, saltos), mas o mesmo codigo toca qualquer JSON exportado do After
   Effects ou tirado do LottieFiles. O Remotion trata da folha, do texto e do
   compasso; o desenho vem do asset.
+
+### Serigrafia sobre papel (`Serigrafia.tsx`)
+
+O registo de embalagem impressa: papel kraft com fibra e mancha feitos por
+`feTurbulence`, tipo em vermelho `#A24C3E` deformado por `feDisplacementMap`
+para parecer tinta que falhou no bordo, codigo de barras gerado com o `random()`
+do Remotion (deterministico entre renders), carimbo que cai torto e talao que
+desliza. Nenhuma imagem no projeto.
+
+Serve de camada por cima de fotografia: entrando uma foto de fundo, o tipo, o
+carimbo e o talao ficam onde estao. E tambem a forma de cumprir a regra da marca
+de que o texto e composto a parte e nunca gerado dentro da imagem.
 
 ## Licenca do Remotion
 
