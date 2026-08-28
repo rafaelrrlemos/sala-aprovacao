@@ -54,10 +54,15 @@ a{color:var(--brandsoft)}
 .selo.aprovado{background:var(--ok);color:var(--okink)}
 .selo.alteracao{background:var(--warn);color:var(--warnink)}
 .selo.pendente{background:var(--pend);color:var(--pendink)}
+.selo.rever{background:var(--brandsoft);color:#231F2C}
+.selo.aplicada{background:var(--ok);color:var(--okink)}
+.selo.pronto{background:var(--ok);color:var(--okink)}
 .selinho{width:20px;height:20px;border-radius:999px;display:flex;align-items:center;justify-content:center}
 .selinho.aprovado{background:var(--ok);color:var(--okink)}
 .selinho.alteracao{background:var(--warn);color:var(--warnink)}
 .selinho.pendente{background:var(--pend);color:var(--pendink)}
+.selinho.rever{background:var(--brandsoft);color:#231F2C}
+.selinho.aplicada{background:var(--ok);color:var(--okink)}
 
 /* controlos */
 .filtros{display:flex;gap:4px;border:1px solid var(--line);border-radius:999px;padding:3px;flex-wrap:wrap}
@@ -331,10 +336,21 @@ var I = {
   volta:'<path d="M14.5 5 8 12l6.5 7"/>',
   camara:'<path d="M15.5 8.5v7a2 2 0 0 1-2 2h-8a2 2 0 0 1-2-2v-7a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2z"/><path d="m15.5 11.5 5-2.7v6.4l-5-2.7z"/>',
   baixar:'<path d="M12 4v11M7.5 10.5 12 15l4.5-4.5M4.5 19.5h15"/>',
-  mail:'<rect x="3" y="5.5" width="18" height="13" rx="2"/><path d="m3.6 6.8 8.4 6 8.4-6"/>'
+  mail:'<rect x="3" y="5.5" width="18" height="13" rx="2"/><path d="m3.6 6.8 8.4 6 8.4-6"/>',
+  olho:'<path d="M2.5 12S6 5.8 12 5.8s9.5 6.2 9.5 6.2-3.5 6.2-9.5 6.2S2.5 12 2.5 12z"/><circle cx="12" cy="12" r="3.1"/>'
 };
-var ROTULO = { aprovado:"Aprovado", alteracao:"Com alteração", pendente:"Pendente" };
-var ICONE = { aprovado:I.ok, alteracao:I.pen, pendente:I.relogio };
+var ROTULO = { aprovado:"Aprovado", alteracao:"Com alteração", pendente:"Pendente",
+               rever:"Rever de novo", aplicada:"Alteração aplicada" };
+var ICONE = { aprovado:I.ok, alteracao:I.pen, pendente:I.relogio,
+              rever:I.olho, aplicada:I.ok };
+
+// O selo mostra a decisão dela e, quando a agência já mexeu, o pós-decisão:
+// 'rever' = há versão nova para ela olhar; 'aplicada' = feito, nada novo.
+function estadoVis(p){
+  if (p && p.estado === "alteracao" && p.revisao === "rever") return "rever";
+  if (p && p.estado === "alteracao" && p.revisao === "aplicada") return "aplicada";
+  return p ? p.estado : p;
+}
 
 function selo(e){ return '<span class="selo ' + e + '">' + svg(ICONE[e],13,2.2) + ROTULO[e] + '</span>'; }
 function selinho(e){ return '<span class="selinho ' + e + '">' + svg(ICONE[e],12,2.4) + '</span>'; }
@@ -482,7 +498,9 @@ function ladoHTML(){
     '<div style="flex:1"></div>' +
     '<div class="rodape aviso naoimprime">' + svg(I.mail,17) +
       '<div>' + (pr.pendentes === 0
-        ? 'Está tudo decidido. Pode guardar o PDF quando quiser.'
+        ? ((pr.para_rever||0) > 0
+            ? 'Tem ' + pr.para_rever + ' peça' + (pr.para_rever===1?'':'s') + ' com versão nova para rever.'
+            : 'Está tudo decidido. Pode guardar o PDF quando quiser.')
         : 'Quando as ' + pr.total + ' estiverem decididas, dá para guardar o PDF.') + '</div></div>' +
   '</aside>';
 }
@@ -536,9 +554,17 @@ function semanasHTML(){
   var cartoes = D.semanas.map(function(s){
     var feitas = s.total - s.pendentes;
     var pct = s.total ? Math.round(100*feitas/s.total) : 0;
-    var estado = s.pendentes === 0
-      ? '<span class="selo aprovado">' + svg(I.ok,13,2.2) + 'Tudo decidido</span>'
-      : '<span class="selo pendente">' + svg(I.relogio,13,2.2) + s.pendentes + ' por decidir</span>';
+    // O caminho da semana: decidir (ela) -> ajustes (agência) ->
+    // rever de novo (ela, só se houver material novo) -> pronto para postar.
+    var estado;
+    if (s.pendentes > 0)
+      estado = '<span class="selo pendente">' + svg(I.relogio,13,2.2) + s.pendentes + ' por decidir</span>';
+    else if ((s.para_rever||0) > 0)
+      estado = '<span class="selo rever">' + svg(I.olho,13,2.2) + s.para_rever + ' para rever</span>';
+    else if ((s.por_aplicar||0) > 0)
+      estado = '<span class="selo alteracao">' + svg(I.pen,13,2.2) + 'Decidido · em ajustes</span>';
+    else
+      estado = '<span class="selo pronto">' + svg(I.ok,13,2.2) + 'Pronto para postar</span>';
     return '<button class="semana" data-semana="' + esc(s.inicio) + '">' +
       '<div style="display:flex;align-items:flex-start;justify-content:space-between;gap:10px">' +
         '<span class="eyebrow" style="color:var(--brandsoft)">' + esc(faixaSemana(s)) + '</span>' + estado +
@@ -584,7 +610,7 @@ function feedHTML(){
 
 function celHTML(p){
   return '<button class="cel" data-abrir="' + esc(p.chave) + '">' +
-    '<div class="arte"><span class="badge">' + selinho(p.estado) + '</span>' +
+    '<div class="arte"><span class="badge">' + selinho(estadoVis(p)) + '</span>' +
       (p.laminas[0] && p.laminas[0].asset
         ? '<img loading="lazy" src="' + IMG + encodeURI(p.laminas[0].asset) + '" alt="">'
         : '<div class="vazia"><span class="eyebrow" style="line-height:1.6">' +
@@ -609,7 +635,7 @@ function linhaHTML(p){
     '<span class="col-formato" style="font-size:12.5px;color:var(--dim)">' + esc(tipoRotulo(p)) + '</span>' +
     '<span style="font-size:13.5px;line-height:1.4">' + esc(p.titulo) + '</span>' +
     '<span class="col-legenda">' + leg + '</span>' +
-    '<span style="display:flex;justify-content:flex-end">' + selo(p.estado) + '</span>' +
+    '<span style="display:flex;justify-content:flex-end">' + selo(estadoVis(p)) + '</span>' +
   '</button>';
 }
 
@@ -804,7 +830,7 @@ function storiesHTML(){
         'padding:14px;border-radius:12px;background:var(--surface);border:1px solid var(--line);width:100%">' +
         '<span style="flex:1;min-width:0">' +
           '<span style="display:flex;align-items:center;gap:8px;margin-bottom:5px">' +
-            '<span class="serif" style="font-size:15px">' + quando(p.publicar_em) + '</span>' + selo(p.estado) + '</span>' +
+            '<span class="serif" style="font-size:15px">' + quando(p.publicar_em) + '</span>' + selo(estadoVis(p)) + '</span>' +
           '<span style="display:block;font-size:12.5px;color:var(--dim);line-height:1.45">' + esc(p.titulo) + '</span>' +
           '<span style="display:block;font-size:11px;color:var(--mute);margin-top:4px">' +
             (falta ? '<b style="color:var(--warn)">' + falta + ' por gravar</b> · ' : "") +
@@ -827,7 +853,7 @@ function reelsHTML(){
   return topoHTML("Reels", esc(falta + " por gravar · " + rs.length + " nesta semana"), filtrosHTML(rs)) +
     '<div class="cartoes">' + filtrar(rs).map(function(p){
       return '<button class="cel" data-abrir="' + esc(p.chave) + '">' +
-        '<div class="arte story"><span class="badge">' + selinho(p.estado) + '</span>' +
+        '<div class="arte story"><span class="badge">' + selinho(estadoVis(p)) + '</span>' +
           (p.laminas[0] && p.laminas[0].asset
             ? '<img loading="lazy" src="' + IMG + encodeURI(p.laminas[0].asset) + '" alt="">'
             : '<div class="vazia"><span style="display:flex;flex-direction:column;align-items:center;gap:8px">' +
