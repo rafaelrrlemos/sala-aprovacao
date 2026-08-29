@@ -510,12 +510,28 @@ function arte(lam, classe){
          txt + '</span></div></div>';
 }
 
+// ------------------------------------------------------------------- tema
+// A paleta de cada cliente vive em ap_clientes.tema (a API manda-a em
+// D.cliente.tema). O :root do CSS e so a reserva: se o cliente tiver tema,
+// e ele que manda. Trocar de cliente = trocar as cores na base, nada aqui.
+var CORES = ["bg","surface","surface2","line","ink","dim","mute","brand","brandsoft",
+             "ok","okink","warn","warnink","pend","pendink"];
+function aplicarTema(t){
+  if (!t) return;
+  var raiz = document.documentElement;
+  CORES.forEach(function(k){
+    var v = t[k];
+    if (typeof v === "string" && /^#[0-9a-fA-F]{3,8}$/.test(v.trim()))
+      raiz.style.setProperty("--" + k, v.trim());
+  });
+}
+
 // ------------------------------------------------------------------- rede
 function puxar(){
   return fetch(API).then(function(r){
     if (!r.ok) throw new Error("nao consegui abrir a sala");
     return r.json();
-  }).then(function(j){ D = j; erroMsg = ""; desenhar(); });
+  }).then(function(j){ D = j; aplicarTema(D.cliente && D.cliente.tema); erroMsg = ""; desenhar(); });
 }
 
 function enviar(chave, accao, corpo){
