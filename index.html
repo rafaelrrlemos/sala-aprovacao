@@ -749,7 +749,7 @@ function baixarHTML(p, lam){
   if (!prontas.length && !temTxt) return "";
   var partes = [];
   if (lam && lam.asset){
-    var nomeDl = (p.rede || "IG") + "_" + p.tipo + "_" + lam.indice + "_" + dia;
+    var nomeDl = (p.rede || "IG") + "_" + p.tipo + "_" + lam.indice + "_" + dia + "_" + letraDa(p);
     partes.push('<a class="bt linha" href="' + DL + encodeURI(lam.asset) +
       '?n=' + encodeURIComponent(nomeDl) + '">' + svg(I.baixar,17) +
       (p.laminas.length > 1
@@ -1236,6 +1236,18 @@ function planoHTML(){
 // ------------------------------------------- por dia: o espelho do dia
 function diaKey(iso){ return new Date(iso).toLocaleDateString("en-CA", { timeZone:"America/Sao_Paulo" }); }
 
+// a letra da peca no dia: duas pecas do mesmo formato no mesmo dia nao
+// partilham nome de ficheiro — a 1.a e "a", a 2.a "b" (regra de 29/08/2026)
+function letraDa(p){
+  var g = D.pecas.filter(function(x){
+    return x.tipo === p.tipo && (x.rede || "IG") === (p.rede || "IG") &&
+           diaKey(x.publicar_em) === diaKey(p.publicar_em);
+  }).sort(function(a,b){ return a.publicar_em < b.publicar_em ? -1 :
+    a.publicar_em > b.publicar_em ? 1 : (a.chave < b.chave ? -1 : 1); });
+  for (var i=0;i<g.length;i++) if (g[i].chave === p.chave) return String.fromCharCode(97+i);
+  return "a";
+}
+
 function diasTodos(){
   var vistos = {}, dias = [];
   D.pecas.slice().sort(function(a,b){ return a.publicar_em < b.publicar_em ? -1 : 1; })
@@ -1272,7 +1284,7 @@ function diaHTML(){
     var mini = lam && lam.asset
       ? '<span class="mini"><img loading="lazy" src="' + IMG + encodeURI(lam.asset) + '" alt=""></span>'
       : '<span class="mini"><span>' + (lam && lam.producao === "por_gravar" ? "por<br>gravar" : "por<br>desenhar") + '</span></span>';
-    var zipNome = (p2.rede || "IG") + "_" + p2.tipo + "_" + diaCurto(p2.publicar_em) + ".zip";
+    var zipNome = (p2.rede || "IG") + "_" + p2.tipo + "_" + diaCurto(p2.publicar_em) + "_" + letraDa(p2) + ".zip";
     return '<div class="dia-peca">' +
       '<span class="num">' + (i2+1) + '</span>' + mini +
       '<span class="info"><span class="l1">' + esc(hora(p2.publicar_em)) +
