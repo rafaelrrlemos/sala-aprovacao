@@ -358,6 +358,22 @@ body.so-imp .sala,body.so-imp .tabs{display:none!important}
 .imp .leg{padding:16px 0 0}
 .imp .leg .rot{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#888;margin-bottom:8px}
 .imp .leg .texto{font-size:12px;line-height:1.8;color:#222;white-space:pre-line;max-width:640px}
+
+/* a folha "Copy dos vídeos": só texto, pensada para A4 */
+.imp .cp-cab{border-bottom:2px solid #111;padding-bottom:10px;margin-bottom:8px}
+.imp .cp-cab .linha1{font-size:10px;letter-spacing:.18em;text-transform:uppercase;color:#666;margin-bottom:6px}
+.imp .cp-cab h2{font-family:Georgia,serif;font-size:22px;font-weight:400;color:#111}
+.imp .cp-grupo{font-size:11px;letter-spacing:.16em;text-transform:uppercase;color:#444;font-weight:600;
+  margin:20px 0 2px;padding-bottom:6px;border-bottom:1px solid #999}
+.imp .cp-peca{padding:13px 0 15px;border-bottom:1px solid #ddd;page-break-inside:avoid;break-inside:avoid}
+.imp .cp-peca .l1{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#888;margin-bottom:5px}
+.imp .cp-peca h3{font-family:Georgia,serif;font-size:16.5px;font-weight:400;color:#111}
+.imp .cp-rot{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:#8a6d1a;margin:11px 0 4px}
+.imp .cp-txt{font-family:Georgia,serif;font-size:12.5px;line-height:1.72;color:#222;
+  white-space:pre-line;max-width:640px}
+.imp .cp-leg .cp-rot{color:#888}
+.imp .cp-leg .cp-txt{font-family:'Instrument Sans',system-ui,sans-serif;font-size:11.5px;line-height:1.75}
+@page{size:A4;margin:14mm}
 @media print{
   body{background:#fff;color:#111}
   .lado,.tabs,.topo .accoes,.naoimprime{display:none!important}
@@ -389,6 +405,7 @@ var aba = "feed", vista = "grelha", filtro = "todas";
 var aberta = null, laminaSel = null, diaAberto = null;
 var editando = false, rascunho = "", ocupado = false, erroMsg = "";
 var pdfPeca = null;                          // chave da peça no modo PDF (null = todas)
+var pdfCopys = false;                        // modo PDF da folha "Copy dos vídeos"
 var PDFQ = new URLSearchParams(location.search).get("pdf");
 var eu = location.hash.indexOf("agencia") >= 0 ? "agencia" : "cliente";
 var nome = localStorage.getItem("sala_nome_" + SLUG) || "";
@@ -566,7 +583,8 @@ function ladoHTML(){
   if (semanaSel){
     var s = semanaAtual();
     var navs = [["feed",I.feed,"Feed"],["stories",I.story,"Stories"],
-                ["reels",I.reel,"Reels"],["estrategia",I.doc,"Estratégia"]];
+                ["reels",I.reel,"Reels"],["estrategia",I.doc,"Estratégia"],
+                ["copys",I.camara,"Copy dos vídeos"]];
     nav = '<button data-semanas="1" style="display:flex;align-items:center;gap:12px;min-height:46px;' +
           'padding:0 14px;border-radius:10px;color:var(--mute);font-size:14px;font-weight:500;width:100%">' +
           svg(I.volta,18) + '<span>Todas as semanas</span></button>' +
@@ -629,7 +647,8 @@ function tabsHTML(){
     }).join("") + '</nav>';
   }
   var navs = [["feed",I.feed,"Feed"],["stories",I.story,"Stories"],
-              ["reels",I.reel,"Reels"],["estrategia",I.doc,"Estratégia"]];
+              ["reels",I.reel,"Reels"],["estrategia",I.doc,"Estratégia"],
+              ["copys",I.camara,"Copys"]];
   return '<nav class="tabs naoimprime">' +
     '<button data-semanas="1">' + svg(I.volta,21) + '<span>Semanas</span><span class="risco"></span></button>' +
     navs.map(function(n){
@@ -1046,6 +1065,128 @@ function estrategiaHTML(){
     '<div class="est">' + partes.join("") + '</div>';
 }
 
+// ------------------------------------------------- copy dos vídeos (semana)
+// Tudo o que é vídeo na semana aberta — stories e reels — com a copy inteira:
+// o que ela fala (guião, placa a placa) e a legenda. Separado por canal e
+// formato, pela ordem de publicação. Sai também em folha A4, para imprimir.
+function eVideo(p){ return p.tipo === "reel" || p.tipo === "stories"; }
+function videosDaSemana(){
+  return daSemana().filter(eVideo).slice()
+    .sort(function(a,b){ return a.publicar_em < b.publicar_em ? -1 : 1; });
+}
+function gruposCopy(vids){
+  var ordem = [], mapa = {};
+  vids.forEach(function(p){
+    var k = (p.rede || "IG") + " · " + (p.tipo === "reel" ? "Reels" : "Stories");
+    if (!mapa[k]){ mapa[k] = []; ordem.push(k); }
+    mapa[k].push(p);
+  });
+  return ordem.map(function(k){ return { rotulo:k, pecas:mapa[k] }; });
+}
+function rotuloFala(p, l){
+  if (l.producao === "por_desenhar") return "a fotografia que entra aqui";
+  return "o que você fala";
+}
+function cabelhoCopy(p){
+  return (p.rede || "IG") + " · " + tipoRotulo(p) + " · nº " + numeroDa(p) + " do dia · " +
+    quando(p.publicar_em) + " · " + hora(p.publicar_em);
+}
+
+function copyPecaEcra(p){
+  var falas = p.laminas.filter(function(l){ return l.guiao; });
+  var dir = falas.map(function(l){
+    var rot = (p.laminas.length > 1 ? "Placa " + l.indice : "Este vídeo") +
+      (l.rotulo ? " · " + l.rotulo : "") + " — " + rotuloFala(p, l);
+    return '<div style="padding:9px 0 3px">' +
+      '<div class="eyebrow" style="color:var(--warn);margin-bottom:6px">' + esc(rot) + '</div>' +
+      '<div class="serif" style="font-size:13.5px;line-height:1.72;color:var(--ink);white-space:pre-line">' +
+      esc(l.guiao) + '</div></div>';
+  }).join("");
+  if (!dir) dir = '<div class="nota" style="padding:8px 0 2px">O guião deste vídeo ainda está por escrever.</div>';
+  var leg = p.legenda
+    ? '<div style="padding:10px 0 2px;border-top:1px solid var(--line);margin-top:10px">' +
+      '<div class="eyebrow" style="color:var(--mute);margin-bottom:6px">Legenda</div>' +
+      '<div style="font-size:12.5px;line-height:1.7;color:var(--dim);white-space:pre-line">' +
+      esc(p.legenda.texto) + '</div></div>'
+    : '<div class="nota" style="padding:10px 0 2px;border-top:1px solid var(--line);margin-top:10px">' +
+      'Legenda por escrever.</div>';
+  return '<div class="bloco">' +
+    '<div style="display:flex;align-items:center;justify-content:space-between;gap:10px;flex-wrap:wrap">' +
+      '<span style="font-size:11px;letter-spacing:.09em;text-transform:uppercase;font-weight:600;' +
+      'color:var(--mute)">' + esc(cabelhoCopy(p)) + '</span>' + selo(estadoVis(p)) + '</div>' +
+    '<h3 style="margin-top:7px">' + esc(p.titulo) + (p.nota ? '<span style="font-size:12px;' +
+      'font-family:\'Instrument Sans\',sans-serif;color:var(--mute)"> · ' + esc(p.nota) + '</span>' : "") + '</h3>' +
+    dir + leg +
+    '<div style="margin-top:12px" class="naoimprime"><button class="bt-mini" data-abrir="' + esc(p.chave) +
+      '">Abrir a peça ›</button></div>' +
+  '</div>';
+}
+
+function copysHTML(){
+  var s = semanaAtual();
+  var vids = videosDaSemana();
+  if (!vids.length)
+    return topoHTML("Copy dos vídeos", esc(s ? rotuloSemana(s) : ""), "") +
+      '<div class="carga">Nenhum vídeo nesta semana.</div>';
+  var accao = '<button class="bt-mini" data-imprimir-copys="1">' + svg(I.doc,15,2) +
+    'Guardar em PDF · folha A4</button>';
+  var corpo = gruposCopy(vids).map(function(g){
+    return '<div class="eyebrow" style="color:var(--brandsoft);margin:12px 0 2px">' + esc(g.rotulo) +
+      ' · ' + g.pecas.length + (g.pecas.length > 1 ? ' vídeos' : ' vídeo') + '</div>' +
+      g.pecas.map(copyPecaEcra).join("");
+  }).join("");
+  return topoHTML("Copy dos vídeos",
+      esc(vids.length + " vídeo" + (vids.length > 1 ? "s" : "") + " · stories e reels · " +
+        (s ? rotuloSemana(s) : D.ciclo.titulo)), accao) +
+    '<div class="est">' + corpo + '</div>';
+}
+
+// a mesma folha, em preto no branco, para o A4
+function impCopyPecaHTML(p){
+  var falas = p.laminas.filter(function(l){ return l.guiao; });
+  var dir = falas.map(function(l){
+    var rot = (p.laminas.length > 1 ? "Placa " + l.indice : "Este vídeo") +
+      (l.rotulo ? " · " + l.rotulo : "") + " — " + rotuloFala(p, l);
+    return '<div class="cp-rot">' + esc(rot) + '</div><div class="cp-txt">' + esc(l.guiao) + '</div>';
+  }).join("");
+  var leg = p.legenda
+    ? '<div class="cp-leg"><div class="cp-rot">Legenda</div><div class="cp-txt">' +
+      esc(p.legenda.texto) + '</div></div>' : "";
+  return '<div class="cp-peca">' +
+    '<div class="l1">' + esc(cabelhoCopy(p)) + ' · ' + esc(ROTULO[estadoVis(p)] || p.estado) + '</div>' +
+    '<h3>' + esc(p.titulo) + (p.nota ? ' · ' + esc(p.nota) : "") + '</h3>' +
+    dir + leg + '</div>';
+}
+
+function impCopysHTML(){
+  var s = semanaAtual();
+  var vids = videosDaSemana();
+  var cab = '<div class="cp-cab">' +
+    '<div class="linha1">Copy dos vídeos · ' + esc(D.cliente.arroba || D.cliente.nome) +
+      ' · ' + esc(D.ciclo.titulo) + '</div>' +
+    '<h2>' + esc(s ? (rotuloSemana(s) + " · " + faixaSemana(s)) : "Todas as semanas") + '</h2></div>';
+  var corpo = gruposCopy(vids).map(function(g){
+    return '<div class="cp-grupo">' + esc(g.rotulo) + '</div>' +
+      g.pecas.map(impCopyPecaHTML).join("");
+  }).join("");
+  return cab + corpo;
+}
+
+function imprimirCopys(){
+  pdfCopys = true;
+  desenhar();
+  document.body.classList.add("so-imp");
+  var t0 = document.title;
+  var s = semanaAtual();
+  document.title = "copys_" + ((D.cliente && D.cliente.slug) || "cliente") + "_" + (s ? s.inicio : "semana");
+  window.print();
+  setTimeout(function(){
+    document.title = t0;
+    document.body.classList.remove("so-imp");
+    pdfCopys = false; desenhar();
+  }, 400);
+}
+
 // ---------------------------------------------------------------- concluido
 function fimHTML(){
   var pr = D.progresso;
@@ -1096,6 +1237,7 @@ function impPecaHTML(p){
 }
 
 function impressaoHTML(){
+  if (pdfCopys) return '<div class="imp">' + impCopysHTML() + '</div>';
   var pecas = pdfPeca
     ? [pecaPorChave(pdfPeca)].filter(Boolean)
     : D.pecas.slice().sort(function(a,b){ return a.publicar_em < b.publicar_em ? -1 : 1; });
@@ -1339,6 +1481,7 @@ function desenhar(){
   } else if (aba === "feed"){ meio = feedHTML(); }
   else if (aba === "stories"){ meio = storiesHTML(); }
   else if (aba === "reels"){ meio = reelsHTML(); }
+  else if (aba === "copys"){ meio = copysHTML(); }
   else { meio = estrategiaHTML(); }
 
   var erroHTML = erroMsg ? '<div class="aviso-erro">' + esc(erroMsg) + '</div>' : "";
@@ -1408,7 +1551,7 @@ document.addEventListener("focusout", function(ev){
 document.addEventListener("click", function(ev){
   var alvo = ev.target.closest ? ev.target.closest("[data-aba],[data-abrir],[data-vista],[data-filtro]," +
     "[data-lamina],[data-voltar],[data-estado],[data-comentar],[data-editar],[data-cancelar]," +
-    "[data-guardar-legenda],[data-imprimir],[data-pdf],[data-semana],[data-semanas]," +
+    "[data-guardar-legenda],[data-imprimir],[data-imprimir-copys],[data-pdf],[data-semana],[data-semanas]," +
     "[data-passar],[data-ecra],[data-plano-semana],[data-dia],[data-abrir-peca]," +
     "[data-brief-estado],[data-brief-editar],[data-brief-cancelar],[data-brief-guardar]," +
     "[data-linha-nova]") : null;
@@ -1490,6 +1633,7 @@ document.addEventListener("click", function(ev){
     editando = false;
     enviar(d.guardarLegenda, "legenda", { texto: t });
   }
+  else if (d.imprimirCopys){ imprimirCopys(); }
   else if (d.imprimir){ imprimir(null); }
   else if (d.pdf){ imprimir(d.pdf); }
 });
