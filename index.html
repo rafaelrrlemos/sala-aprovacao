@@ -554,6 +554,8 @@ function aplicarTema(t){
 // ------------------------------------------------------------------- rede
 function puxar(){
   return fetch(API).then(function(r){
+    // 404 = o ciclo deste link nao existe (link velho, trocado) — nao e rede
+    if (r.status === 404) throw new Error("LINK_MORTO");
     if (!r.ok) throw new Error("nao consegui abrir a sala");
     return r.json();
   }).then(function(j){ D = j; aplicarTema(D.cliente && D.cliente.tema); erroMsg = ""; desenhar(); });
@@ -1702,8 +1704,11 @@ if (!SLUG){
   if (PDFQ){ pdfPeca = PDFQ; desenhar(); document.body.classList.add("so-imp"); }
 }).catch(function(e){
   document.getElementById("raiz").innerHTML =
-    '<div class="aviso-erro" style="margin:32px">Não consegui abrir esta sala. ' +
-    'Verifique a ligação e recarregue a página.</div>';
+    '<div class="aviso-erro" style="margin:32px">' +
+    (e && e.message === "LINK_MORTO"
+      ? 'Este link já não existe ou foi trocado. Peça o link atual da sua sala e abra por ele.'
+      : 'Não consegui abrir esta sala. Verifique a ligação e recarregue a página.') +
+    '</div>';
 });
 })();
 </script>
