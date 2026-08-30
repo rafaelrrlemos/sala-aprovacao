@@ -334,6 +334,111 @@ a.bt{text-decoration:none}
   .dia-peca .acoes{flex-direction:row;width:100%;justify-content:flex-end}
 }
 
+/* ------------------------------------------------------------ teleprompter */
+/* Pedido da Teneci (30/08/2026): ler o guião a rolar ou frase a frase,
+   enquanto grava. Vive por cima de tudo, fora do #raiz, e usa o tema. */
+#tp{position:fixed;inset:0;z-index:60;background:var(--bg);display:none;
+  flex-direction:column}
+#tp.aberto{display:flex}
+#tp .tp-topo{display:flex;align-items:center;gap:8px;padding:10px 12px;flex:none;
+  border-bottom:1px solid var(--line);overflow-x:auto;scrollbar-width:none}
+#tp .tp-topo::-webkit-scrollbar{display:none}
+#tp .tp-chip{flex:none;display:flex;flex-direction:column;align-items:flex-start;gap:1px;
+  border:1px solid var(--line);border-radius:10px;padding:6px 12px;color:var(--mute)}
+#tp .tp-chip b{font-size:13px;font-weight:600;color:var(--dim)}
+#tp .tp-chip small{font-size:10px;max-width:150px;overflow:hidden;text-overflow:ellipsis;
+  white-space:nowrap}
+#tp .tp-chip.on{background:var(--surface2);border-color:var(--brandsoft)}
+#tp .tp-chip.on b{color:var(--ink)}
+#tp .tp-x{margin-left:auto;flex:none;width:38px;height:38px;border-radius:10px;
+  display:flex;align-items:center;justify-content:center;color:var(--mute);
+  border:1px solid var(--line)}
+#tp .tp-barra{height:3px;background:var(--surface2);flex:none}
+#tp .tp-barra i{display:block;height:100%;width:0%;background:var(--brandsoft);
+  transition:width .25s linear}
+#tp .tp-palco{flex:1;position:relative;overflow:hidden;cursor:pointer;
+  -webkit-user-select:none;user-select:none}
+#tp .tp-palco::before,#tp .tp-palco::after{content:"";position:absolute;left:0;right:0;
+  height:16%;z-index:2;pointer-events:none}
+#tp .tp-palco::before{top:0;background:linear-gradient(180deg,var(--bg) 12%,transparent)}
+#tp .tp-palco::after{bottom:0;background:linear-gradient(0deg,var(--bg) 12%,transparent)}
+#tp .tp-olho{position:absolute;left:0;top:34%;z-index:3;pointer-events:none;
+  border-top:11px solid transparent;border-bottom:11px solid transparent;
+  border-left:13px solid var(--warn);opacity:.85}
+#tp .tp-rolo{position:absolute;left:0;right:0;top:0;will-change:transform}
+#tp .tp-miolo{max-width:30ch;margin:0 auto;padding:0 22px}
+#tp .tp-cena{font-size:.42em;line-height:1.55;color:var(--warn);margin-bottom:1.1em;
+  white-space:pre-line}
+#tp .tp-cena .rot{display:block;font-size:.72em;letter-spacing:.18em;
+  text-transform:uppercase;color:var(--mute);margin-bottom:.35em}
+#tp .tp-fala{font-family:Georgia,'Times New Roman',serif;line-height:1.52;color:var(--ink);
+  white-space:pre-line}
+#tp .tp-fim{margin-top:1.2em;font-size:.4em;color:var(--mute);letter-spacing:.14em;
+  text-transform:uppercase}
+#tp .tp-frase{position:absolute;inset:0;z-index:1;display:none;flex-direction:column;
+  align-items:center;justify-content:center;gap:18px;padding:28px;text-align:center}
+#tp .tp-palco.modo-frase .tp-rolo,#tp .tp-palco.modo-frase .tp-olho{display:none}
+#tp .tp-palco.modo-frase::before,#tp .tp-palco.modo-frase::after{display:none}
+#tp .tp-palco.modo-frase .tp-frase{display:flex}
+#tp .tp-frase-cena{font-size:12px;color:var(--warn);max-width:46ch;line-height:1.5}
+#tp .tp-frase-cena .rot{display:block;font-size:10px;letter-spacing:.18em;
+  text-transform:uppercase;color:var(--mute);margin-bottom:3px}
+#tp .tp-frase-txt{font-family:Georgia,'Times New Roman',serif;color:var(--ink);
+  line-height:1.38;max-width:20ch;text-wrap:balance;white-space:pre-line}
+#tp .tp-frase-conta{display:flex;align-items:center;gap:12px;font-size:12px;
+  color:var(--mute);font-variant-numeric:tabular-nums}
+#tp .tp-salto{width:38px;height:38px;border-radius:999px;border:1px solid var(--line);
+  display:flex;align-items:center;justify-content:center;color:var(--dim)}
+#tp .tp-salto:disabled{opacity:.3;cursor:default}
+#tp .tp-palco.espelho .tp-rolo,#tp .tp-palco.espelho .tp-frase{scale:-1 1}
+#tp .tp-conta{position:absolute;inset:0;z-index:5;display:none;align-items:center;
+  justify-content:center;background:rgba(20,18,26,.86)}
+#tp .tp-conta.on{display:flex}
+#tp .tp-conta span{font-family:Georgia,serif;font-size:min(34vw,180px);color:var(--brandsoft)}
+#tp .tp-aviso{position:absolute;z-index:4;left:50%;bottom:12%;transform:translateX(-50%);
+  background:rgba(20,18,26,.82);border:1px solid var(--line);border-radius:999px;
+  padding:8px 16px;font-size:12px;color:var(--dim);display:none;white-space:nowrap}
+#tp .tp-palco.pausado .tp-aviso{display:block}
+#tp .tp-ctl{flex:none;border-top:1px solid var(--line);background:var(--surface);
+  padding:10px 14px calc(10px + env(safe-area-inset-bottom));
+  display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+#tp .tp-play{width:52px;height:52px;border-radius:999px;background:var(--brandsoft);
+  color:#231F2C;display:flex;align-items:center;justify-content:center;flex:none}
+#tp .tp-q{width:40px;height:40px;border-radius:10px;border:1px solid var(--line);
+  display:flex;align-items:center;justify-content:center;color:var(--dim);flex:none}
+#tp .tp-q[aria-pressed="true"]{background:var(--surface2);color:var(--ink);
+  border-color:var(--brandsoft)}
+#tp .tp-modo{display:flex;border:1px solid var(--line);border-radius:999px;padding:3px;
+  gap:2px;flex:none}
+#tp .tp-modo button{border-radius:999px;padding:7px 13px;font-size:12px;font-weight:600;
+  color:var(--mute)}
+#tp .tp-modo button.on{background:var(--surface2);color:var(--ink)}
+#tp .tp-aj{display:flex;align-items:center;gap:10px;flex:1;min-width:180px}
+#tp .tp-aj input{flex:1;accent-color:var(--brandsoft);min-width:100px}
+#tp .tp-num{font-variant-numeric:tabular-nums;font-family:Georgia,serif;font-size:22px;
+  width:1.4em;text-align:center;color:var(--brandsoft)}
+#tp .tp-dica{font-size:10px;color:var(--mute);white-space:nowrap}
+#tp .tp-ints{display:flex;gap:6px;flex-wrap:wrap}
+#tp .tp-ints button{border:1px solid var(--line);border-radius:999px;padding:8px 12px;
+  font-size:12.5px;font-weight:600;color:var(--dim);font-variant-numeric:tabular-nums}
+#tp .tp-ints button.on{background:var(--brandsoft);border-color:var(--brandsoft);color:#231F2C}
+#tp .tp-rot{font-size:10px;letter-spacing:.16em;text-transform:uppercase;font-weight:600;
+  color:var(--mute);flex:none}
+@media (max-height:430px){
+  #tp .tp-topo{padding:6px 10px}
+  #tp .tp-chip{padding:4px 10px}
+  #tp .tp-chip small{display:none}
+  #tp .tp-ctl{padding:6px 12px calc(6px + env(safe-area-inset-bottom));gap:8px}
+  #tp .tp-play{width:42px;height:42px}
+  #tp .tp-q{width:34px;height:34px}
+  #tp .tp-dica,#tp .tp-rot{display:none}
+  #tp .tp-ints button{padding:6px 10px}
+  #tp .tp-olho{top:30%}
+}
+@media (min-width:900px){ #tp .tp-miolo{max-width:34ch} #tp .tp-frase-txt{max-width:24ch} }
+.bt-tp{background:var(--brandsoft)!important;border-color:var(--brandsoft)!important;
+  color:#231F2C!important}
+
 /* ---------------------------------------------------------------- impressao */
 .imp{display:none}
 body.so-imp .imp{display:block;background:#fff;color:#111;min-height:100vh;padding:28px}
@@ -1127,8 +1232,13 @@ function copyPecaEcra(p){
     '<h3 style="margin-top:7px">' + esc(p.titulo) + (p.nota ? '<span style="font-size:12px;' +
       'font-family:\'Instrument Sans\',sans-serif;color:var(--mute)"> · ' + esc(p.nota) + '</span>' : "") + '</h3>' +
     dir + leg +
-    '<div style="margin-top:12px" class="naoimprime"><button class="bt-mini" data-abrir="' + escAttr(p.chave) +
-      '">Abrir a peça ›</button></div>' +
+    '<div style="margin-top:12px;display:flex;gap:8px;flex-wrap:wrap" class="naoimprime">' +
+      '<button class="bt-mini" data-abrir="' + escAttr(p.chave) + '">Abrir a peça ›</button>' +
+      (tpPlacasDe(p).length
+        ? '<button class="bt-mini bt-tp" data-teleprompter="' + escAttr(p.chave) + '">' +
+          '<svg width="14" height="14" viewBox="0 0 24 24" fill="currentColor" style="display:inline-block;vertical-align:-2px;margin-right:6px"><path d="M8 5.5v13l11-6.5z"/></svg>' +
+          'Teleprompter</button>' : '') +
+    '</div>' +
   '</div>';
 }
 
@@ -1198,6 +1308,311 @@ function imprimirCopys(){
     pdfCopys = false; desenhar();
   });
   window.print();
+}
+
+// -------------------------------------------------------------- teleprompter
+// Pedido da Teneci (30/08/2026): ler o guião enquanto grava. Dois jeitos:
+// «Rolar» (velocidade 1–10; 5 = ~140 palavras por minuto, 1 = bem lenta) e
+// «Por frase» (a frase troca sozinha a cada 1/2/3/4/5/10 segundos).
+// Lê os guiões vivos da peça (lâminas por_gravar). Vive FORA do #raiz para o
+// desenhar() não o apagar a meio de uma gravação.
+var TP_INT = [1, 2, 3, 4, 5, 10];
+var TP_DICAS = { 1:"bem lenta", 2:"lenta", 3:"calma", 4:"quase lá", 5:"normal",
+                 6:"um pouco +", 7:"rápida", 8:"rápida +", 9:"muito rápida", 10:"máxima" };
+var tp = { peca:null, idx:0, modo:"rolar", vel:5, seg:3, fonte:34, andar:false,
+           y:0, raf:null, t0:0, pps:0, frases:[], fi:0, timer:null, wake:null,
+           contando:false };
+
+function tpPlacasDe(p){
+  return p.laminas.filter(function(l){ return l.producao === "por_gravar" && l.guiao; });
+}
+// stories: a nota de cena vem antes do primeiro « — separa-se aqui.
+// reel: o guião corre inteiro (blocos com tempos), sem corte.
+function tpSeparar(p, guiao){
+  if (p.tipo === "stories"){
+    var i = guiao.indexOf("«");
+    if (i > 0) return { dir: guiao.slice(0, i).trim(), fala: guiao.slice(i).trim() };
+  }
+  return { dir: "", fala: guiao };
+}
+function tpFrases(t){
+  var m = t.match(/[^.!?…]+[.!?…]+[»”)\]]*\s*/g);
+  return (m || [t]).map(function(f){ return f.trim(); }).filter(Boolean);
+}
+
+function tpEl(){
+  var el = document.getElementById("tp");
+  if (el) return el;
+  el = document.createElement("div");
+  el.id = "tp";
+  el.className = "naoimprime";
+  el.innerHTML =
+    '<div class="tp-topo" id="tp-chips"></div>' +
+    '<div class="tp-barra"><i id="tp-prog"></i></div>' +
+    '<div class="tp-palco pausado" id="tp-palco">' +
+      '<span class="tp-olho"></span>' +
+      '<div class="tp-rolo" id="tp-rolo"><div class="tp-miolo" id="tp-miolo"></div></div>' +
+      '<div class="tp-frase">' +
+        '<div class="tp-frase-cena" id="tp-fcena"></div>' +
+        '<div class="tp-frase-txt" id="tp-ftxt"></div>' +
+        '<div class="tp-frase-conta">' +
+          '<button class="tp-salto" id="tp-ant" aria-label="Frase anterior">' + svg(I.volta,16,2) + '</button>' +
+          '<span id="tp-fn">1 / 1</span>' +
+          '<button class="tp-salto" id="tp-seg" aria-label="Próxima frase">' +
+            '<span style="display:flex;transform:rotate(180deg)">' + svg(I.volta,16,2) + '</span></button>' +
+        '</div></div>' +
+      '<div class="tp-conta" id="tp-conta"><span id="tp-conta-n">3</span></div>' +
+      '<div class="tp-aviso">Toque no texto ou no ▶ para começar</div>' +
+    '</div>' +
+    '<div class="tp-ctl">' +
+      '<button class="tp-play" id="tp-play" aria-label="Começar ou pausar">' +
+        '<svg id="tp-iplay" width="22" height="22" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5.5v13l11-6.5z"/></svg>' +
+        '<svg id="tp-ipausa" width="22" height="22" viewBox="0 0 24 24" fill="currentColor" style="display:none"><path d="M7 5h3.4v14H7zM13.6 5H17v14h-3.6z"/></svg></button>' +
+      '<button class="tp-q" id="tp-rein" aria-label="Voltar ao início">' +
+        '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M4 10a8 8 0 1 1 2.3 6.3"/><path d="M4 4.5V10h5.5"/></svg></button>' +
+      '<div class="tp-modo"><button id="tp-mrolar" class="on">Rolar</button>' +
+        '<button id="tp-mfrase">Por frase</button></div>' +
+      '<div class="tp-aj" id="tp-cvel"><span class="tp-rot">Vel.</span>' +
+        '<input type="range" id="tp-vel" min="1" max="10" step="1" value="5" aria-label="Velocidade de 1 a 10">' +
+        '<span class="tp-num" id="tp-veln">5</span><span class="tp-dica" id="tp-veld">normal</span></div>' +
+      '<div class="tp-aj" id="tp-cint" style="display:none"><span class="tp-rot">Muda a cada</span>' +
+        '<div class="tp-ints" id="tp-ints"></div></div>' +
+      '<span class="tp-rot">Letra</span>' +
+      '<button class="tp-q" id="tp-menos" aria-label="Diminuir a letra" style="font-size:15px;font-weight:600">A−</button>' +
+      '<button class="tp-q" id="tp-mais" aria-label="Aumentar a letra" style="font-size:18px;font-weight:600">A+</button>' +
+      '<button class="tp-q" id="tp-esp" aria-pressed="false" aria-label="Espelhar" title="Espelhar (vidro de teleprompter)">' +
+        '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M12 3v18M8 7 4.5 12 8 17M16 7l3.5 5L16 17"/></svg></button>' +
+      '<button class="tp-x" id="tp-x" aria-label="Fechar" style="margin-left:0">' +
+        '<svg width="17" height="17" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m6 6 12 12M18 6 6 18"/></svg></button>' +
+    '</div>';
+  document.body.appendChild(el);
+  tpLigar(el);
+  return el;
+}
+
+function tpChips(){
+  var placas = tpPlacasDe(tp.peca);
+  document.getElementById("tp-chips").innerHTML = placas.map(function(l, i){
+    return '<button class="tp-chip' + (i===tp.idx ? " on" : "") + '" data-tp-i="' + i + '">' +
+      '<b>' + (tp.peca.tipo === "reel" ? "Reel" : "Placa " + l.indice) + '</b>' +
+      '<small>' + esc((l.rotulo || "").replace(/^Vídeo · /, "").replace(/^O vídeo · /, "")) + '</small></button>';
+  }).join("") +
+  '<button class="tp-x" id="tp-x2" aria-label="Fechar">' +
+    '<svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="m6 6 12 12M18 6 6 18"/></svg></button>';
+}
+
+function tpMontar(){
+  var placas = tpPlacasDe(tp.peca);
+  var l = placas[tp.idx] || placas[0];
+  if (!l) return;
+  var sep = tpSeparar(tp.peca, l.guiao);
+  tpParar();
+  tp.frases = tpFrases(sep.fala);
+  tp.fi = 0;
+  var cab = (tp.peca.tipo === "reel" ? "Reel" : "Placa " + l.indice) +
+    (l.rotulo ? " · " + l.rotulo.replace(/^Vídeo · /, "").replace(/^O vídeo · /, "") : "");
+  var miolo = document.getElementById("tp-miolo");
+  miolo.innerHTML =
+    '<div class="tp-cena"><span class="rot">' + esc(cab) + (sep.dir ? ' · a cena</span>' + esc(sep.dir) : '</span>') + '</div>' +
+    '<div class="tp-fala">' + esc(sep.fala) + '</div>' +
+    '<div class="tp-fim">fim · ' + esc(tp.peca.titulo) + '</div>';
+  document.getElementById("tp-rolo").style.fontSize = tp.fonte + "px";
+  document.getElementById("tp-fcena").innerHTML =
+    '<span class="rot">' + esc(cab) + (sep.dir ? ' · a cena</span>' + esc(sep.dir) : '</span>');
+  var palco = document.getElementById("tp-palco");
+  tp.y = -Math.round(palco.clientHeight * 0.34);
+  tpMedir(); tpPintar(); tpPintarFrase(); tpChips();
+}
+
+// 5 = ~140 palavras por minuto. px/s = palavras/s × altura por palavra medida
+// no ecrã real — a mesma velocidade lê igual ao alto, deitado e no portátil.
+function tpMedir(){
+  var placas = tpPlacasDe(tp.peca);
+  var l = placas[tp.idx] || placas[0];
+  if (!l) return;
+  var fala = tpSeparar(tp.peca, l.guiao).fala;
+  var miolo = document.getElementById("tp-miolo");
+  var base = (140/60) * (miolo.scrollHeight / Math.max(fala.split(/\s+/).length, 1));
+  tp.pps = base * Math.pow(tp.vel/5, 1.15);
+}
+
+function tpPintar(){
+  document.getElementById("tp-rolo").style.transform = "translateY(" + (-tp.y) + "px)";
+  if (tp.modo !== "rolar") return;
+  var palco = document.getElementById("tp-palco");
+  var topo = palco.clientHeight * 0.34;
+  var fim = document.getElementById("tp-miolo").scrollHeight - topo;
+  var pct = Math.max(0, Math.min(1, (tp.y + topo) / Math.max(fim + topo, 1)));
+  document.getElementById("tp-prog").style.width = (pct*100) + "%";
+}
+
+function tpPintarFrase(){
+  var f = tp.frases[tp.fi] || "";
+  var ft = document.getElementById("tp-ftxt");
+  ft.textContent = f;
+  var t = tp.fonte * (f.length > 150 ? 0.72 : f.length > 90 ? 0.85 : 1.05);
+  ft.style.fontSize = Math.round(t) + "px";
+  document.getElementById("tp-fn").textContent = (tp.fi+1) + " / " + tp.frases.length;
+  document.getElementById("tp-ant").disabled = tp.fi === 0;
+  document.getElementById("tp-seg").disabled = tp.fi >= tp.frases.length-1;
+  if (tp.modo === "frase")
+    document.getElementById("tp-prog").style.width = ((tp.fi+1) / tp.frases.length * 100) + "%";
+}
+
+function tpPasso(t){
+  if (!tp.andar) return;
+  if (tp.t0) tp.y += tp.pps * (t - tp.t0) / 1000;
+  tp.t0 = t;
+  var palco = document.getElementById("tp-palco");
+  var fim = document.getElementById("tp-miolo").scrollHeight - palco.clientHeight * 0.30;
+  if (tp.y >= fim){ tp.y = fim; tpPintar(); tpParar(); return; }
+  tpPintar();
+  tp.raf = requestAnimationFrame(tpPasso);
+}
+
+function tpAndar(){
+  if (tp.andar) return;
+  tp.andar = true; tp.t0 = 0;
+  document.getElementById("tp-palco").classList.remove("pausado");
+  document.getElementById("tp-iplay").style.display = "none";
+  document.getElementById("tp-ipausa").style.display = "block";
+  if (navigator.wakeLock)
+    navigator.wakeLock.request("screen").then(function(w){ tp.wake = w; }).catch(function(){});
+  if (tp.modo === "rolar"){
+    tpMedir();       // recalibra com o rolo visível (vindo do modo frase dava 0)
+    tp.raf = requestAnimationFrame(tpPasso);
+  } else {
+    tp.timer = setInterval(function(){
+      if (tp.fi >= tp.frases.length-1){ tpParar(); return; }
+      tp.fi++; tpPintarFrase();
+    }, tp.seg * 1000);
+  }
+}
+
+function tpParar(){
+  tp.andar = false;
+  if (tp.raf) cancelAnimationFrame(tp.raf);
+  if (tp.timer){ clearInterval(tp.timer); tp.timer = null; }
+  var palco = document.getElementById("tp-palco");
+  if (palco){
+    palco.classList.add("pausado");
+    document.getElementById("tp-iplay").style.display = "block";
+    document.getElementById("tp-ipausa").style.display = "none";
+  }
+  if (tp.wake){ tp.wake.release().catch(function(){}); tp.wake = null; }
+}
+
+// contagem 3-2-1 antes de andar: tempo de pousar o telemóvel e olhar a câmara
+function tpContar(){
+  if (tp.contando || tp.andar) return;
+  tp.contando = true;
+  var n = 3, cx = document.getElementById("tp-conta"),
+      cn = document.getElementById("tp-conta-n");
+  cx.classList.add("on"); cn.textContent = n;
+  var tic = setInterval(function(){
+    n--;
+    if (n <= 0){ clearInterval(tic); cx.classList.remove("on"); tp.contando = false; tpAndar(); }
+    else cn.textContent = n;
+  }, 800);
+}
+
+function tpModo(novo){
+  if (tp.modo === novo) return;
+  tpParar();
+  tp.modo = novo;
+  document.getElementById("tp-palco").classList.toggle("modo-frase", novo === "frase");
+  document.getElementById("tp-mrolar").classList.toggle("on", novo === "rolar");
+  document.getElementById("tp-mfrase").classList.toggle("on", novo === "frase");
+  document.getElementById("tp-cvel").style.display = novo === "rolar" ? "flex" : "none";
+  document.getElementById("tp-cint").style.display = novo === "frase" ? "flex" : "none";
+  if (novo === "rolar"){ tpMedir(); tpPintar(); } else { tpPintarFrase(); }
+}
+
+function tpFechar(){
+  tpParar();
+  var el = document.getElementById("tp");
+  if (el) el.classList.remove("aberto");
+}
+
+function abrirTeleprompter(chave){
+  var p = pecaPorChave(chave);
+  if (!p || !tpPlacasDe(p).length) return;
+  tp.peca = p; tp.idx = 0;
+  var el = tpEl();
+  document.getElementById("tp-ints").innerHTML = TP_INT.map(function(s){
+    return '<button data-tp-seg="' + s + '" class="' + (s===tp.seg ? "on" : "") + '">' + s + 's</button>';
+  }).join("");
+  el.classList.add("aberto");
+  tpMontar();
+}
+
+function tpLigar(el){
+  el.addEventListener("click", function(ev){
+    var a = ev.target.closest ? ev.target.closest("[data-tp-i],[data-tp-seg],#tp-x,#tp-x2," +
+      "#tp-play,#tp-rein,#tp-mrolar,#tp-mfrase,#tp-menos,#tp-mais,#tp-esp,#tp-ant,#tp-seg") : null;
+    if (a){
+      if (a.dataset.tpI !== undefined){ tp.idx = Number(a.dataset.tpI); tpMontar(); }
+      else if (a.dataset.tpSeg !== undefined){
+        tp.seg = Number(a.dataset.tpSeg);
+        var bs = el.querySelectorAll("[data-tp-seg]");
+        for (var i=0;i<bs.length;i++) bs[i].classList.toggle("on", Number(bs[i].dataset.tpSeg) === tp.seg);
+        if (tp.andar && tp.timer){
+          clearInterval(tp.timer);
+          tp.timer = setInterval(function(){
+            if (tp.fi >= tp.frases.length-1){ tpParar(); return; }
+            tp.fi++; tpPintarFrase();
+          }, tp.seg * 1000);
+        }
+      }
+      else if (a.id === "tp-x" || a.id === "tp-x2"){ tpFechar(); }
+      else if (a.id === "tp-play"){ tp.andar ? tpParar() : tpContar(); }
+      else if (a.id === "tp-rein"){
+        tpParar();
+        tp.y = -Math.round(document.getElementById("tp-palco").clientHeight * 0.34);
+        tp.fi = 0; tpPintar(); tpPintarFrase();
+      }
+      else if (a.id === "tp-mrolar"){ tpModo("rolar"); }
+      else if (a.id === "tp-mfrase"){ tpModo("frase"); }
+      else if (a.id === "tp-menos" || a.id === "tp-mais"){
+        tp.fonte = Math.max(22, Math.min(56, tp.fonte + (a.id === "tp-mais" ? 3 : -3)));
+        document.getElementById("tp-rolo").style.fontSize = tp.fonte + "px";
+        tpMedir(); tpPintar(); tpPintarFrase();
+      }
+      else if (a.id === "tp-esp"){
+        var on = a.getAttribute("aria-pressed") === "true";
+        a.setAttribute("aria-pressed", on ? "false" : "true");
+        document.getElementById("tp-palco").classList.toggle("espelho", !on);
+      }
+      else if (a.id === "tp-ant"){ if (tp.fi > 0){ tp.fi--; tpPintarFrase(); } }
+      else if (a.id === "tp-seg"){ if (tp.fi < tp.frases.length-1){ tp.fi++; tpPintarFrase(); } }
+      return;
+    }
+    if (ev.target.closest && ev.target.closest("#tp-palco")){
+      tp.andar ? tpParar() : tpContar();
+    }
+  });
+  var vel = el.querySelector("#tp-vel");
+  vel.addEventListener("input", function(){
+    tp.vel = Number(this.value);
+    document.getElementById("tp-veln").textContent = tp.vel;
+    document.getElementById("tp-veld").textContent = TP_DICAS[tp.vel];
+    tpMedir();
+  });
+  window.addEventListener("resize", function(){
+    if (!el.classList.contains("aberto")) return;
+    tpMedir(); tpPintar(); tpPintarFrase();
+  });
+  document.addEventListener("keydown", function(ev){
+    if (!el.classList.contains("aberto")) return;
+    if (ev.key === " "){ ev.preventDefault(); tp.andar ? tpParar() : tpContar(); }
+    else if (ev.key === "Escape"){ tpFechar(); }
+    else if (tp.modo === "rolar" && ev.key === "ArrowUp" && tp.vel < 10){
+      vel.value = ++tp.vel; vel.dispatchEvent(new Event("input")); }
+    else if (tp.modo === "rolar" && ev.key === "ArrowDown" && tp.vel > 1){
+      vel.value = --tp.vel; vel.dispatchEvent(new Event("input")); }
+    else if (tp.modo === "frase" && ev.key === "ArrowRight"){ document.getElementById("tp-seg").click(); }
+    else if (tp.modo === "frase" && ev.key === "ArrowLeft"){ document.getElementById("tp-ant").click(); }
+  });
 }
 
 // ---------------------------------------------------------------- concluido
@@ -1599,7 +2014,7 @@ document.addEventListener("click", function(ev){
   var alvo = ev.target.closest ? ev.target.closest("[data-aba],[data-abrir],[data-vista],[data-filtro]," +
     "[data-lamina],[data-voltar],[data-estado],[data-comentar],[data-editar],[data-cancelar]," +
     "[data-guardar-legenda],[data-imprimir],[data-imprimir-copys],[data-pdf],[data-semana],[data-semanas]," +
-    "[data-passar],[data-ecra],[data-plano-semana],[data-dia],[data-abrir-peca]," +
+    "[data-passar],[data-ecra],[data-plano-semana],[data-dia],[data-abrir-peca],[data-teleprompter]," +
     "[data-brief-estado],[data-brief-editar],[data-brief-cancelar],[data-brief-guardar]," +
     "[data-linha-nova]") : null;
   if (!alvo) return;
@@ -1689,6 +2104,7 @@ document.addEventListener("click", function(ev){
     enviar(d.guardarLegenda, "legenda", { texto: t },
       function(){ editando = false; rascunho = ""; });
   }
+  else if (d.teleprompter){ abrirTeleprompter(d.teleprompter); }
   else if (d.imprimirCopys){ imprimirCopys(); }
   else if (d.imprimir){ imprimir(null); }
   else if (d.pdf){ imprimir(d.pdf); }
