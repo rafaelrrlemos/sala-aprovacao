@@ -569,19 +569,26 @@ function estadoVis(p){
 function selo(e){ return '<span class="selo ' + e + '">' + svg(ICONE[e],13,2.2) + ROTULO[e] + '</span>'; }
 function selinho(e){ return '<span class="selinho ' + e + '">' + svg(ICONE[e],12,2.4) + '</span>'; }
 
+// O fuso do cliente vive no tema (chave "fuso"). Sem ela, a sala continua em
+// hora do Brasil — e o que a Teneci e a Chris esperam. A Canon publica de Lisboa.
+function fuso(){
+  var f = D && D.cliente && D.cliente.tema && D.cliente.tema.fuso;
+  return (typeof f === "string" && f) ? f : "America/Sao_Paulo";
+}
+
 function quando(iso, comHora){
   var d = new Date(iso);
-  var o = { timeZone:"America/Sao_Paulo", day:"2-digit", month:"2-digit" };
+  var o = { timeZone:fuso(), day:"2-digit", month:"2-digit" };
   var s = d.toLocaleDateString("pt-BR", o);
   if (comHora){
-    var h = d.toLocaleTimeString("pt-BR", { timeZone:"America/Sao_Paulo", hour:"2-digit", minute:"2-digit" });
+    var h = d.toLocaleTimeString("pt-BR", { timeZone:fuso(), hour:"2-digit", minute:"2-digit" });
     s += " · " + (h.replace(":00","h").replace(":","h"));
   }
   return s;
 }
 function hora(iso){
   var h = new Date(iso).toLocaleTimeString("pt-BR",
-    { timeZone:"America/Sao_Paulo", hour:"2-digit", minute:"2-digit" });
+    { timeZone:fuso(), hour:"2-digit", minute:"2-digit" });
   return h.replace(":00","h").replace(":","h");
 }
 function tipoRotulo(p){
@@ -606,7 +613,7 @@ function daSemana(){
   return D.pecas.filter(function(p){ return p.semana === semanaSel; });
 }
 function diaSP(iso){
-  return new Date(iso).toLocaleDateString("pt-BR", { timeZone:"America/Sao_Paulo" });
+  return new Date(iso).toLocaleDateString("pt-BR", { timeZone:fuso() });
 }
 // n.º de publicação dentro do dia: a peça 1 é a primeira a sair
 function numeroDa(p){
@@ -619,7 +626,7 @@ function numeroDa(p){
 }
 var MESES_C = ["jan","fev","mar","abr","mai","jun","jul","ago","set","out","nov","dez"];
 function diaCurto(iso){
-  var d = new Date(iso).toLocaleDateString("en-CA", { timeZone:"America/Sao_Paulo" });
+  var d = new Date(iso).toLocaleDateString("en-CA", { timeZone:fuso() });
   return d.slice(8,10) + MESES_C[Number(d.slice(5,7)) - 1];
 }
 // a rede como entra em nomes de ficheiro — os mesmos filtros do servidor,
@@ -1845,7 +1852,7 @@ function planoHTML(){
 }
 
 // ------------------------------------------- por dia: o espelho do dia
-function diaKey(iso){ return new Date(iso).toLocaleDateString("en-CA", { timeZone:"America/Sao_Paulo" }); }
+function diaKey(iso){ return new Date(iso).toLocaleDateString("en-CA", { timeZone:fuso() }); }
 
 // a letra da peca no dia: duas pecas do mesmo formato no mesmo dia nao
 // partilham nome de ficheiro — a 1.a e "a", a 2.a "b" (regra de 29/08/2026)
@@ -1879,7 +1886,7 @@ function diaHTML(){
   var sel = null;
   if (diaSel){ for (var i=0;i<dias.length;i++) if (dias[i].k === diaSel) sel = diaSel; }
   if (!sel){
-    var hoje = new Date().toLocaleDateString("en-CA", { timeZone:"America/Sao_Paulo" });
+    var hoje = new Date().toLocaleDateString("en-CA", { timeZone:fuso() });
     for (var j=0;j<dias.length;j++) if (dias[j].k >= hoje){ sel = dias[j].k; break; }
     if (!sel) sel = dias[dias.length-1].k;
   }
